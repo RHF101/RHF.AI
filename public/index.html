@@ -3,70 +3,122 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RHF-AI | Neural Adaptive Core</title>
+    <title>RHF | Neural Interface</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #050505; color: #fafafa; }
-        .glass { background: rgba(18, 18, 18, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); }
+        :root {
+            --bg-main: #f8f9fa;
+            --bg-card: #ffffff;
+            --text-primary: #1a1a1b;
+            --text-secondary: #6b7280;
+            --accent: #374151;
+            --border: #e5e7eb;
+        }
+
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: var(--bg-main); 
+            color: var(--text-primary);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .soft-shadow {
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+        }
+
         .chat-container::-webkit-scrollbar { width: 4px; }
-        .chat-container::-webkit-scrollbar-thumb { background: #222; border-radius: 10px; }
-        .bubble-user { background: linear-gradient(135deg, #2563eb, #1d4ed8); border-radius: 20px 20px 4px 20px; }
-        .bubble-ai { background: #121212; border: 1px solid #262626; border-radius: 20px 20px 20px 4px; }
-        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        pre { background: #000 !important; padding: 1rem; border-radius: 12px; border: 1px solid #333; overflow-x: auto; margin: 10px 0; }
-        code { color: #10b981; }
+        .chat-container::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+
+        /* Bubble Styles - Natural & Professional */
+        .bubble-user { 
+            background-color: var(--accent); 
+            color: white;
+            border-radius: 18px 18px 2px 18px;
+        }
+
+        .bubble-ai { 
+            background-color: var(--bg-card); 
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            border-radius: 18px 18px 18px 2px;
+        }
+
+        .input-glass {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--border);
+        }
+
+        /* Animation */
+        .fade-in { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Typography */
+        .prose pre { background: #f1f5f9 !important; color: #334155 !important; padding: 12px; border-radius: 10px; border: 1px solid #e2e8f0; }
+        .prose code { color: #db2777; font-size: 0.85em; }
     </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden">
 
-    <!-- OVERLAY PERSETUJUAN & LOGIN -->
-    <div id="setup-overlay" class="fixed inset-0 z-50 flex items-center justify-center bg-black p-6">
-        <div class="max-w-md w-full text-center">
-            <h1 class="text-4xl font-light tracking-[0.8em] text-white mb-6">RHF CORE</h1>
-            <div class="glass p-6 rounded-3xl mb-8 text-left">
-                <h3 class="text-green-500 text-[10px] font-bold tracking-[0.2em] mb-4 uppercase">System & Driver Protocols</h3>
-                <p class="text-zinc-400 text-xs leading-relaxed mb-4">
-                    Dengan menginisialisasi sistem, Anda menyetujui:
-                </p>
-                <ul class="text-zinc-500 text-[10px] space-y-3 uppercase tracking-tighter">
-                    <li>• Sinkronisasi driver memori pada perangkat.</li>
-                    <li>• AI akan mengingat percakapan aktif dari awal.</li>
-                    <li>• <span class="text-white">Auto-Purge:</span> Data yang tidak dibahas selama >10 hari akan dihapus secara otomatis dari neural link untuk efisiensi sistem.</li>
-                </ul>
+    <!-- OVERLAY SETUP -->
+    <div id="setup-overlay" class="fixed inset-0 z-50 flex items-center justify-center bg-white p-6">
+        <div class="max-w-sm w-full">
+            <div class="mb-10 text-center">
+                <h1 class="text-2xl font-semibold tracking-tight text-zinc-900 mb-2">RHF Core</h1>
+                <p class="text-zinc-500 text-xs tracking-wide">Professional Neural Interaction</p>
             </div>
-            <button onclick="loginGoogle()" class="w-full py-4 rounded-full bg-white text-black text-xs font-bold tracking-[0.3em] uppercase hover:bg-green-500 transition-all">
-                Agree & Initialize
+            
+            <div class="bg-zinc-50 border border-zinc-100 p-6 rounded-3xl mb-8">
+                <p class="text-[11px] font-semibold text-zinc-400 uppercase tracking-widest mb-4">Terms of Access</p>
+                <div class="space-y-4">
+                    <div class="flex gap-3">
+                        <div class="w-1 h-1 bg-zinc-400 rounded-full mt-1.5"></div>
+                        <p class="text-[12px] text-zinc-600 leading-snug">Sinkronisasi memori driver perangkat otomatis.</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <div class="w-1 h-1 bg-zinc-400 rounded-full mt-1.5"></div>
+                        <p class="text-[12px] text-zinc-600 leading-snug">Pembersihan data otomatis setelah 10 hari tidak aktif.</p>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="loginGoogle()" class="w-full py-4 rounded-2xl bg-zinc-900 text-white text-sm font-medium hover:bg-zinc-800 transition-all active:scale-[0.98]">
+                Lanjutkan Identitas
             </button>
         </div>
     </div>
 
-    <!-- MAIN INTERFACE -->
-    <div id="app" class="hidden flex-1 flex flex-col max-w-5xl mx-auto w-full">
-        <header class="p-5 flex justify-between items-center glass m-4 rounded-2xl">
-            <div class="flex items-center gap-3">
-                <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span class="text-[10px] tracking-widest uppercase opacity-60" id="user-name">Encrypted Session</span>
+    <!-- MAIN APP -->
+    <div id="app" class="hidden flex-1 flex flex-col max-w-4xl mx-auto w-full px-4 sm:px-0">
+        <header class="py-6 flex justify-between items-center bg-transparent">
+            <div class="flex items-center gap-2">
+                <div class="w-1.5 h-1.5 bg-zinc-900 rounded-full"></div>
+                <span class="text-xs font-semibold tracking-tighter" id="user-name">SESSION ACTIVE</span>
             </div>
-            <button onclick="logout()" class="text-[9px] text-zinc-600 hover:text-red-500 tracking-widest uppercase">Terminate</button>
+            <button onclick="logout()" class="text-[10px] font-medium text-zinc-400 hover:text-zinc-900 uppercase tracking-widest">Terminate</button>
         </header>
 
-        <main id="chat-window" class="chat-container flex-1 overflow-y-auto px-6 py-4 space-y-6"></main>
+        <main id="chat-window" class="chat-container flex-1 overflow-y-auto space-y-6 pb-6 scroll-smooth"></main>
 
-        <footer class="p-6">
-            <div class="relative max-w-3xl mx-auto">
-                <input type="text" id="userInput" 
-                       class="w-full glass bg-opacity-40 rounded-2xl py-5 px-6 outline-none focus:border-green-500/30 transition-all text-sm"
-                       placeholder="Diskusikan logika baru..."
-                       onkeypress="if(event.key === 'Enter') sendChat()">
-                <button onclick="sendChat()" class="absolute right-4 top-1/2 -translate-y-1/2 text-green-500 text-xs font-bold uppercase px-4">Send</button>
+        <footer class="py-6">
+            <div class="relative flex items-center gap-2">
+                <div class="flex-1 relative">
+                    <input type="text" id="userInput" 
+                           class="w-full input-glass rounded-2xl py-4 pl-6 pr-12 outline-none focus:ring-2 focus:ring-zinc-100 transition-all text-[14px] placeholder:text-zinc-400"
+                           placeholder="Ketik pesan..."
+                           onkeypress="if(event.key === 'Enter') sendChat()">
+                </div>
+                <button onclick="sendChat()" class="p-4 bg-zinc-900 text-white rounded-2xl hover:bg-zinc-800 transition-all">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+                </button>
             </div>
+            <p class="text-center text-[10px] text-zinc-400 mt-4 tracking-tighter italic">"Menghubungkan logika dan empati dalam satu frekuensi."</p>
         </footer>
     </div>
 
-    <!-- FIREBASE & LOGIC -->
+    <!-- FIREBASE & CORE LOGIC -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -91,7 +143,7 @@
                 currentUser = user;
                 document.getElementById('setup-overlay').classList.add('hidden');
                 document.getElementById('app').classList.remove('hidden');
-                document.getElementById('user-name').innerText = `Core: ${user.displayName}`;
+                document.getElementById('user-name').innerText = user.displayName;
                 syncAndCleanMemory();
             } else {
                 document.getElementById('setup-overlay').classList.remove('hidden');
@@ -106,27 +158,19 @@
 
         function logout() { auth.signOut(); }
 
-        // LOGIKA PEMBERSIHAN 10 HARI (PURGE SYSTEM)
         async function syncAndCleanMemory() {
             const tenDaysAgo = new Date();
             tenDaysAgo.setDate(tenDaysAgo.getDate() - 10);
-
-            // Cari data yang lebih tua dari 10 hari
-            const oldMessages = await db.collection('chats').doc(currentUser.uid)
-                .collection('messages')
-                .where('timestamp', '<', tenDaysAgo)
-                .get();
-
+            const oldMessages = await db.collection('chats').doc(currentUser.uid).collection('messages')
+                .where('timestamp', '<', tenDaysAgo).get();
             const batch = db.batch();
             oldMessages.forEach(doc => batch.delete(doc.ref));
             await batch.commit();
-            
             loadChatHistory();
         }
 
         async function loadChatHistory() {
-            const snapshot = await db.collection('chats').doc(currentUser.uid)
-                .collection('messages').orderBy('timestamp', 'asc').get();
+            const snapshot = await db.collection('chats').doc(currentUser.uid).collection('messages').orderBy('timestamp', 'asc').get();
             document.getElementById('chat-window').innerHTML = '';
             snapshot.forEach(doc => appendMessage(doc.data().text, doc.data().role));
         }
@@ -139,12 +183,9 @@
             appendMessage(text, 'user');
             input.value = '';
 
-            const loadingId = appendMessage('Processing Neural Link...', 'ai');
+            const loadingId = appendMessage('...', 'ai');
 
-            // Ambil history untuk dikirim ke AI (Ingatan awal-akhir)
-            const snapshot = await db.collection('chats').doc(currentUser.uid)
-                .collection('messages').orderBy('timestamp', 'asc').limit(30).get();
-            
+            const snapshot = await db.collection('chats').doc(currentUser.uid).collection('messages').orderBy('timestamp', 'asc').limit(15).get();
             const history = snapshot.docs.map(doc => ({
                 role: doc.data().role === 'user' ? 'user' : 'assistant',
                 content: doc.data().text
@@ -158,25 +199,25 @@
                 });
                 const data = await res.json();
 
-                // Simpan ke Firestore
                 const chatRef = db.collection('chats').doc(currentUser.uid).collection('messages');
                 await chatRef.add({ text: text, role: 'user', timestamp: firebase.firestore.FieldValue.serverTimestamp() });
                 await chatRef.add({ text: data.reply, role: 'ai', timestamp: firebase.firestore.FieldValue.serverTimestamp() });
 
                 updateMessage(loadingId, data.reply);
             } catch (e) {
-                updateMessage(loadingId, "Connection Refused by Neural Engine.");
+                updateMessage(loadingId, "Koneksi terputus.");
             }
         }
 
         function appendMessage(content, role) {
             const id = Date.now();
             const wrapper = document.createElement('div');
-            wrapper.className = `flex ${role === 'user' ? 'justify-end' : 'justify-start'} fade-in`;
+            wrapper.className = `flex ${role === 'user' ? 'justify-end' : 'justify-start'} fade-in mb-4`;
             wrapper.innerHTML = `
-                <div class="${role === 'user' ? 'bubble-user' : 'bubble-ai'} p-4 max-w-[85%]">
-                    <div class="text-[9px] uppercase tracking-widest opacity-30 mb-1">${role === 'user' ? 'User' : 'RHF-AI'}</div>
-                    <div class="text-sm leading-relaxed prose prose-invert" id="msg-${id}">${marked.parse(content)}</div>
+                <div class="${role === 'user' ? 'bubble-user shadow-md' : 'bubble-ai shadow-sm'} p-4 max-w-[85%] text-sm leading-relaxed">
+                    <div class="prose prose-sm ${role === 'user' ? 'prose-invert' : ''}" id="msg-${id}">
+                        ${marked.parse(content)}
+                    </div>
                 </div>
             `;
             document.getElementById('chat-window').appendChild(wrapper);
@@ -185,7 +226,8 @@
         }
 
         function updateMessage(id, content) {
-            document.getElementById(`msg-${id}`).innerHTML = marked.parse(content);
+            const el = document.getElementById(`msg-${id}`);
+            el.innerHTML = marked.parse(content);
             document.getElementById('chat-window').scrollTop = document.getElementById('chat-window').scrollHeight;
         }
     </script>
