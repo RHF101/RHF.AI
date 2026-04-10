@@ -4,102 +4,89 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
+    <title>ChatGPT</title>
     <style>
-        body { background-color: #212121; color: #d1d1d1; }
-        pre { background-color: #000; padding: 10px; border-radius: 5px; overflow-x: auto; color: #00ffcc; font-family: monospace; border: 1px solid #333; margin: 10px 0; }
-        code { font-family: monospace; color: #ff79c6; }
-        .user-bubble { background-color: #343541; padding: 15px; border-bottom: 1px solid #2a2b32; }
-        .ai-bubble { background-color: #212121; padding: 15px; border-bottom: 1px solid #2a2b32; }
-        .sidebar { background-color: #171717; width: 260px; display: none; }
-        @media (min-width: 768px) { .sidebar { display: flex; } }
+        body { background-color: #ffffff; color: #0d0d0d; font-family: -apple-system, Segoe UI, Roboto, sans-serif; }
+        .user-row { background: #fff; padding: 24px; border-bottom: 1px solid #f0f0f0; }
+        .ai-row { background: #f7f7f8; padding: 24px; border-bottom: 1px solid #f0f0f0; }
+        .content { max-width: 48rem; margin: auto; line-height: 1.6; }
+        pre { background: #000; color: #0f0; padding: 15px; border-radius: 8px; overflow-x: auto; margin: 10px 0; font-family: monospace; }
+        #input-container { border: 1px solid #e5e5e5; border-radius: 24px; background: #fff; box-shadow: 0 0 15px rgba(0,0,0,0.05); }
+        .typing::after { content: '|'; animation: blink 1s infinite; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
     </style>
 </head>
-<body class="flex h-screen">
+<body class="flex flex-col h-screen overflow-hidden">
 
-    <div class="sidebar flex-col p-3 border-r border-gray-800">
-        <button onclick="newChat()" class="w-full border border-gray-600 p-2 rounded hover:bg-gray-800 text-sm mb-4">+ New Chat</button>
-        <div id="history" class="flex-1 overflow-y-auto space-y-2 text-xs opacity-60"></div>
-    </div>
+    <header class="p-4 border-b text-center font-semibold text-gray-700">ChatGPT</header>
 
-    <div class="flex-1 flex flex-col overflow-hidden">
-        <div id="chat-box" class="flex-1 overflow-y-auto">
-            <!-- Pesan akan muncul di sini -->
+    <main id="chat-window" class="flex-1 overflow-y-auto"></main>
+
+    <footer class="p-4 bg-white">
+        <div id="input-container" class="max-w-3xl mx-auto flex items-center p-2">
+            <textarea id="msg" rows="1" class="flex-1 bg-transparent outline-none p-3 resize-none" placeholder="Balasan untuk ChatGPT"></textarea>
+            <button onclick="send()" class="bg-black text-white p-2 rounded-full ml-2 w-10 h-10 flex items-center justify-center">
+                <svg width="16" height="16" fill="white" viewBox="0 0 16 16"><path d="M15.964.686a.5.5 0 0 0-.65-.65L.767 5.855H.766l-.452.18a.5.5 0 0 0-.082.887l.41.26.001.002 4.995 3.178 3.178 4.995.002.002.26.41a.5.5 0 0 0 .886-.083l6-15Zm-1.833 1.89L6.637 10.07l-.215-.338L2.961 6.596 14.131 2.576Z"/></svg>
+            </button>
         </div>
-
-        <div class="p-4 bg-[#212121]">
-            <div class="max-w-3xl mx-auto relative flex items-center bg-[#40414f] rounded-xl shadow-xl">
-                <textarea id="msg-input" rows="1" class="w-full bg-transparent p-4 pr-12 outline-none resize-none" placeholder="Ketik kode atau pertanyaan..."></textarea>
-                <button onclick="send()" class="absolute right-3 text-cyan-500 font-bold hover:scale-110 transition">↑</button>
-            </div>
-            <p class="text-[10px] text-center mt-2 opacity-30">RHF AI Unrestricted Version</p>
-        </div>
-    </div>
+        <p class="text-[10px] text-center text-gray-400 mt-2">Diciptakan oleh RHF. Versi Tanpa Batas.</p>
+    </footer>
 
     <script>
-        let currentId = Date.now();
-        let sessions = JSON.parse(localStorage.getItem('rhf_v2')) || {};
+        let db = JSON.parse(localStorage.getItem('rhf_nexus')) || [];
+        const win = document.getElementById('chat-window');
 
-        function save() {
-            localStorage.setItem('rhf_v2', JSON.stringify(sessions));
-            renderHistory();
+        function typeWriter(element, text, i = 0) {
+            if (i < text.length) {
+                element.innerHTML = text.substring(0, i + 1).replace(/\n/g, '<br>').replace(/```([\s\S]*?)```/g, '<pre>$1</pre>');
+                setTimeout(() => typeWriter(element, text, i + 1), 15);
+                win.scrollTop = win.scrollHeight;
+            } else {
+                element.classList.remove('typing');
+            }
         }
 
-        function renderHistory() {
-            const h = document.getElementById('history');
-            h.innerHTML = "";
-            Object.keys(sessions).reverse().forEach(id => {
-                const d = document.createElement('div');
-                d.className = "p-2 hover:bg-gray-800 rounded cursor-pointer truncate";
-                d.innerText = sessions[id][0]?.content || "Chat Baru";
-                d.onclick = () => { currentId = id; renderChat(); };
-                h.appendChild(d);
+        function renderChat(isNew = false) {
+            win.innerHTML = "";
+            db.forEach((m, idx) => {
+                const row = document.createElement('div');
+                row.className = m.role === 'user' ? 'user-row' : 'ai-row';
+                const contentDiv = document.createElement('div');
+                contentDiv.className = "content";
+                
+                if (isNew && idx === db.length - 1 && m.role === 'assistant') {
+                    contentDiv.classList.add('typing');
+                    typeWriter(contentDiv, m.content);
+                } else {
+                    contentDiv.innerHTML = m.content.replace(/\n/g, '<br>').replace(/```([\s\S]*?)```/g, '<pre>$1</pre>');
+                }
+                
+                row.appendChild(contentDiv);
+                win.appendChild(row);
             });
-        }
-
-        function renderChat() {
-            const box = document.getElementById('chat-box');
-            box.innerHTML = "";
-            (sessions[currentId] || []).forEach(m => {
-                const wrap = document.createElement('div');
-                wrap.className = m.role === 'user' ? 'user-bubble' : 'ai-bubble';
-                // Render kode sederhana
-                const content = m.content.replace(/```([\s\S]*?)```/g, '<pre>$1</pre>');
-                wrap.innerHTML = `<div class='max-w-3xl mx-auto'><b>${m.role==='user'?'YOU':'AI'}:</b><br>${content}</div>`;
-                box.appendChild(wrap);
-            });
-            box.scrollTop = box.scrollHeight;
+            win.scrollTop = win.scrollHeight;
         }
 
         async function send() {
-            const input = document.getElementById('msg-input');
-            const val = input.value.trim();
+            const inp = document.getElementById('msg');
+            const val = inp.value;
             if(!val) return;
 
-            if(!sessions[currentId]) sessions[currentId] = [];
-            sessions[currentId].push({ role: "user", content: val });
-            input.value = "";
+            db.push({ role: "user", content: val });
+            inp.value = "";
             renderChat();
 
             const res = await fetch('/api/chat', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ messages: sessions[currentId] })
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ messages: db })
             });
-            
             const data = await res.json();
-            sessions[currentId].push(data.choices[0].message);
-            save();
-            renderChat();
+            db.push(data.choices[0].message);
+            localStorage.setItem('rhf_nexus', JSON.stringify(db));
+            renderChat(true);
         }
 
-        function newChat() {
-            currentId = Date.now();
-            sessions[currentId] = [];
-            renderChat();
-            renderHistory();
-        }
-
-        renderHistory();
         renderChat();
     </script>
 </body>
