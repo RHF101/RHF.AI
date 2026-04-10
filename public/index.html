@@ -4,97 +4,154 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>RHF NEXUS V6</title>
     <style>
-        body { background-color: #f8f9fa; color: #1a1a1a; font-family: sans-serif; }
-        .sidebar { background: #ffffff; width: 280px; position: fixed; height: 100%; left: -280px; transition: 0.3s; z-index: 100; border-right: 1px solid #eee; }
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;500&display=swap');
+        body { background: #050505; color: #e5e5e5; font-family: 'JetBrains Mono', monospace; }
+        .sidebar { background: #0a0a0a; width: 300px; border-right: 1px solid #1a1a1a; transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); position: fixed; height: 100%; left: -300px; z-index: 100; }
         .sidebar.active { left: 0; }
-        .msg-user { align-self: flex-start; background: #ffffff; border: 1px solid #eee; border-radius: 18px 18px 18px 5px; padding: 12px 16px; max-width: 85%; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
-        .msg-ai { align-self: flex-end; background: #000; color: #fff; border-radius: 18px 18px 5px 18px; padding: 12px 16px; max-width: 85%; }
-        pre { background: #111; color: #0f8; padding: 12px; border-radius: 12px; font-family: monospace; font-size: 0.8rem; overflow-x: auto; margin-top: 8px; }
-        img { border-radius: 15px; margin-top: 10px; width: 100%; border: 1px solid #ddd; }
-        #input-area { background: #fff; border-radius: 25px; border: 1px solid #ddd; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
-        @media (min-width: 768px) { .sidebar { left: 0; } .main-content { margin-left: 280px; } }
+        .main-content { transition: 0.4s; }
+        
+        .msg-user { align-self: flex-start; background: #111; border: 1px solid #222; border-radius: 20px 20px 20px 5px; padding: 15px; max-width: 85%; position: relative; }
+        .msg-ai { align-self: flex-end; background: #ffffff; color: #000; border-radius: 20px 20px 5px 20px; padding: 15px; max-width: 85%; box-shadow: 0 10px 30px rgba(255,255,255,0.05); position: relative; }
+        
+        .copy-btn { position: absolute; top: -10px; right: 10px; background: #333; color: #fff; font-size: 10px; padding: 4px 8px; border-radius: 5px; cursor: pointer; opacity: 0; transition: 0.3s; }
+        .msg-user:hover .copy-btn, .msg-ai:hover .copy-btn { opacity: 1; }
+        
+        pre { background: #000; color: #0f8; padding: 12px; border-radius: 12px; font-size: 0.8rem; overflow-x: auto; margin-top: 10px; border: 1px solid #111; }
+        .file-preview { background: #1a1a1a; padding: 8px; border-radius: 8px; display: flex; align-items: center; gap: 10px; margin-top: 5px; border: 1px solid #333; }
+        
+        #input-panel { background: #0f0f0f; border: 1px solid #1a1a1a; border-radius: 24px; }
+        @media (min-width: 768px) { .sidebar { left: 0; } .main-content { margin-left: 300px; } }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
-    <div id="side" class="sidebar flex flex-col p-5">
-        <h2 class="font-bold text-xl mb-6">RHF <span class="text-gray-400">Nexus</span></h2>
-        <button onclick="newChat()" class="w-full py-3 bg-black text-white rounded-xl mb-4 font-medium">+ New Session</button>
-        <div id="chat-list" class="flex-1 overflow-y-auto space-y-2 text-sm"></div>
+
+    <div id="side" class="sidebar flex flex-col p-6 shadow-2xl">
+        <div class="flex items-center justify-between mb-10">
+            <h1 class="font-bold text-2xl tracking-tighter">RHF <span class="text-xs border px-2 rounded-full border-gray-700">V6</span></h1>
+            <button onclick="newChat()" class="text-gray-500 hover:text-white"><i class="fa-solid fa-plus"></i></button>
+        </div>
+        <div id="chat-list" class="flex-1 overflow-y-auto space-y-3"></div>
+        <div class="mt-5 p-4 bg-gray-900/50 rounded-2xl border border-gray-800 text-[10px]">
+            <p>DEVICE: INFINIX HOT 10S</p>
+            <p>STATUS: SYSTEM_ARCHITECT_MODE</p>
+            <p>ENCRYPTION: AES-256-ACTIVE</p>
+        </div>
     </div>
 
-    <div class="main-content flex-1 flex flex-col w-full">
-        <header class="p-4 border-b flex justify-between items-center bg-white/70 backdrop-blur-md">
-            <button onclick="toggleSide()" class="md:hidden text-2xl">☰</button>
-            <div class="font-bold tracking-widest text-sm">RHF CORE</div>
-            <div></div>
+    <div class="main-content flex-1 flex flex-col w-full relative">
+        <header class="p-5 border-b border-gray-900 flex justify-between items-center bg-black/50 backdrop-blur-xl">
+            <button onclick="toggleSide()" class="md:hidden text-xl"><i class="fa-solid fa-bars-staggered"></i></button>
+            <div class="text-xs text-gray-500 animate-pulse">● CORE_CONNECTED</div>
+            <div class="flex gap-4 text-gray-400 text-sm">
+                <i class="fa-solid fa-shield-halved"></i>
+                <i class="fa-solid fa-bolt"></i>
+            </div>
         </header>
-        <main id="chat-window" class="flex-1 overflow-y-auto p-5 flex flex-col space-y-4"></main>
-        <footer class="p-4">
-            <div id="input-area" class="max-w-3xl mx-auto flex items-end p-2 px-4">
-                <textarea id="msg" rows="1" class="flex-1 bg-transparent outline-none py-2 resize-none text-sm" placeholder="Input command..."></textarea>
-                <button onclick="send()" class="mb-1 ml-2 bg-black text-white p-2 rounded-full">➤</button>
+
+        <main id="chat-window" class="flex-1 overflow-y-auto p-4 md:p-12 flex flex-col space-y-8"></main>
+
+        <footer class="p-6">
+            <div id="input-panel" class="max-w-4xl mx-auto p-2">
+                <div id="file-list" class="flex flex-wrap gap-2 px-4 mb-2"></div>
+                <div class="flex items-end px-4">
+                    <label class="mb-3 mr-3 cursor-pointer text-gray-500 hover:text-white transition">
+                        <i class="fa-solid fa-paperclip text-xl"></i>
+                        <input type="file" id="file-input" multiple class="hidden" onchange="handleFiles(this.files)">
+                    </label>
+                    <textarea id="msg" rows="1" class="flex-1 bg-transparent outline-none py-4 resize-none text-sm" placeholder="Perintahkan RHF Nexus..."></textarea>
+                    <button onclick="send()" class="mb-2 ml-4 bg-white text-black w-10 h-10 rounded-full flex items-center justify-center hover:scale-110 transition active:scale-95">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </div>
             </div>
         </footer>
     </div>
 
     <script>
         let currentId = Date.now();
-        let sessions = JSON.parse(localStorage.getItem('rhf_final')) || {};
-        const win = document.getElementById('chat-window');
+        let db = JSON.parse(localStorage.getItem('rhf_nexus_v6')) || {};
+        let attachedFiles = [];
 
         function toggleSide() { document.getElementById('side').classList.toggle('active'); }
+
+        function copyText(text) {
+            navigator.clipboard.writeText(text);
+            alert("Teks berhasil disalin ke clipboard! 📋");
+        }
+
+        function handleFiles(files) {
+            const list = document.getElementById('file-list');
+            Array.from(files).forEach(f => {
+                attachedFiles.push(f.name);
+                const item = document.createElement('div');
+                item.className = 'file-preview text-[10px]';
+                item.innerHTML = `<i class="fa-solid fa-file-code text-blue-400"></i> ${f.name}`;
+                list.appendChild(item);
+            });
+        }
 
         function format(t) {
             if (t.includes("RHF_IMG|")) {
                 const p = t.split("RHF_IMG|")[1].trim();
-                return `<img src="https://pollinations.ai/p/${encodeURIComponent(p)}?width=1024&height=1024&seed=${Math.random()}&model=flux">`;
+                return `<img src="https://image.pollinations.ai/prompt/${encodeURIComponent(p)}?width=1024&height=1024&nologo=true" class="rounded-2xl border border-gray-800 mt-4">`;
             }
-            return t.replace(/```([\s\S]*?)```/g, '<pre>$1</pre>').replace(/\n/g, '<br>');
+            return t.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>').replace(/\n/g, '<br>');
         }
 
         function renderChat() {
+            const win = document.getElementById('chat-window');
             win.innerHTML = "";
-            (sessions[currentId] || []).forEach(m => {
-                const b = document.createElement('div');
-                b.className = m.role === 'user' ? 'msg-user' : 'msg-ai';
-                b.innerHTML = format(m.content);
-                win.appendChild(b);
+            (db[currentId] || []).forEach(m => {
+                const div = document.createElement('div');
+                div.className = m.role === 'user' ? 'msg-user' : 'msg-ai';
+                div.innerHTML = `<div class="copy-btn" onclick="copyText('${m.content.replace(/'/g, "\\'")}')">COPY</div>` + format(m.content);
+                win.appendChild(div);
             });
             win.scrollTop = win.scrollHeight;
         }
 
         async function send() {
             const inp = document.getElementById('msg');
-            const val = inp.value; if(!val) return;
-            if(!sessions[currentId]) sessions[currentId] = [];
-            sessions[currentId].push({ role: "user", content: val });
+            let val = inp.value; if(!val && attachedFiles.length === 0) return;
+            
+            if(attachedFiles.length > 0) {
+                val += "\n\n[USER MENGIRIM FILE: " + attachedFiles.join(", ") + "]";
+                attachedFiles = [];
+                document.getElementById('file-list').innerHTML = "";
+            }
+
+            if(!db[currentId]) db[currentId] = [];
+            db[currentId].push({ role: "user", content: val });
             inp.value = ""; renderChat();
 
             const res = await fetch('/api/chat', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ messages: sessions[currentId] })
+                body: JSON.stringify({ messages: db[currentId] })
             });
-            const d = await res.json();
-            sessions[currentId].push(d.choices[0].message);
-            localStorage.setItem('rhf_final', JSON.stringify(sessions));
+            const data = await res.json();
+            db[currentId].push(data.choices[0].message);
+            localStorage.setItem('rhf_nexus_v6', JSON.stringify(db));
             renderChat();
             renderList();
         }
 
         function renderList() {
-            const l = document.getElementById('chat-list'); l.innerHTML = "";
-            Object.keys(sessions).reverse().forEach(id => {
-                const i = document.createElement('div');
-                i.className = `p-3 rounded-xl cursor-pointer truncate ${id == currentId ? 'bg-gray-100 font-bold' : ''}`;
-                i.innerText = sessions[id][0]?.content || "New Session";
-                i.onclick = () => { currentId = id; renderChat(); if(window.innerWidth < 768) toggleSide(); };
-                l.appendChild(i);
+            const list = document.getElementById('chat-list');
+            list.innerHTML = "";
+            Object.keys(db).reverse().forEach(id => {
+                const item = document.createElement('div');
+                item.className = `p-4 rounded-2xl cursor-pointer truncate text-sm transition ${id == currentId ? 'bg-white text-black font-bold' : 'hover:bg-white/5 text-gray-400'}`;
+                item.innerText = db[id][0]?.content || "Sesi Baru";
+                item.onclick = () => { currentId = id; renderChat(); if(window.innerWidth < 768) toggleSide(); };
+                list.appendChild(item);
             });
         }
 
-        function newChat() { currentId = Date.now(); sessions[currentId] = []; renderChat(); renderList(); }
+        function newChat() { currentId = Date.now(); db[currentId] = []; renderChat(); renderList(); if(window.innerWidth < 768) toggleSide(); }
         renderList(); renderChat();
     </script>
 </body>
