@@ -3,175 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RHF | Neural Interface</title>
+    <title>RHF | Neural Link</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
-        :root {
-            --bg-main: #fcfcfc; /* Putih bersih dengan sedikit kehangatan */
-            --bg-card: #ffffff;
-            --text-primary: #1c1c1e; /* Hitam Charcoal, tidak terlalu pekat */
-            --text-secondary: #8e8e93; /* Abu-abu iOS standar untuk sub-teks */
-            --accent: #2c2c2e; /* Abu-abu sangat tua untuk elemen aktif */
-            --border: #eeeeee; /* Garis batas yang sangat tipis & samar */
-        }
+        :root { --bg: #fdfdfd; --card: #ffffff; --text: #1a1a1a; --border: #eeeeee; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg); color: var(--text); overflow: hidden; height: 100vh; }
+        
+        /* UI Profesional & Natural */
+        .app-frame { max-width: 600px; margin: 0 auto; height: 100vh; display: flex; flex-direction: column; background: var(--card); border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
+        .chat-area { flex: 1; overflow-y: auto; padding: 20px; scroll-behavior: smooth; }
+        .chat-area::-webkit-scrollbar { width: 3px; }
+        .chat-area::-webkit-scrollbar-thumb { background: #eee; }
 
-        body { 
-            font-family: 'Plus Jakarta Sans', sans-serif; 
-            background-color: var(--bg-main); 
-            color: var(--text-primary);
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-            overflow: hidden; /* Mencegah scroll pada body utama */
-            height: 100vh;
-        }
+        /* Bubble Chat Ikonik */
+        .b-user { background: #2d3436; color: white; border-radius: 18px 18px 2px 18px; padding: 12px 16px; margin-bottom: 12px; align-self: flex-end; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .b-ai { background: #ffffff; border: 1px solid var(--border); border-radius: 18px 18px 18px 2px; padding: 12px 16px; margin-bottom: 12px; align-self: flex-start; }
+        
+        .input-box { padding: 15px; border-top: 1px solid var(--border); display: flex; gap: 10px; background: white; }
+        .input-field { flex: 1; padding: 12px 20px; border-radius: 25px; background: #f6f6f6; border: 1px solid #eee; outline: none; font-size: 14px; }
+        .input-field:focus { background: white; border-color: #ddd; }
+        
+        .btn-send { background: #1a1a1a; color: white; padding: 12px; border-radius: 50%; transition: 0.2s; }
+        .btn-send:active { scale: 0.9; }
 
-        /* Presisi Layout */
-        .app-wrapper {
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            max-width: 640px; /* Lebar optimal untuk keterbacaan profesional */
-            margin: 0 auto;
-            border-left: 1px solid var(--border);
-            border-right: 1px solid var(--border);
-            background-color: var(--bg-card);
-        }
-
-        /* Chat Window - Responsif & Rapi */
-        .chat-container {
-            flex: 1;
-            overflow-y: auto;
-            padding: 24px 16px;
-            scroll-behavior: smooth;
-            -webkit-overflow-scrolling: touch; /* Scroll halus di iOS */
-        }
-
-        .chat-container::-webkit-scrollbar { width: 4px; }
-        .chat-container::-webkit-scrollbar-thumb { background: #f0f0f0; border-radius: 4px; }
-
-        /* Bubble Chat Ikonik - Tanpa Norak */
-        .bubble-user { 
-            background-color: var(--accent); 
-            color: #ffffff;
-            border-radius: 18px 18px 2px 18px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.06);
-        }
-
-        .bubble-ai { 
-            background-color: var(--bg-card); 
-            border: 1px solid var(--border);
-            color: var(--text-primary);
-            border-radius: 18px 18px 18px 2px;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.01);
-        }
-
-        /* Input Area - Tetap di Bawah, Tanpa Bug */
-        .input-area {
-            padding: 16px;
-            background-color: var(--bg-card);
-            border-top: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            position: sticky;
-            bottom: 0;
-            z-index: 10;
-        }
-
-        .input-field {
-            flex: 1;
-            padding: 14px 20px;
-            background-color: #f6f6f6; /* Abu-abu sangat muda untuk input */
-            border: 1px solid #eeeeee;
-            border-radius: 24px;
-            font-size: 14px;
-            outline: none;
-            transition: all 0.2s ease;
-        }
-
-        .input-field:focus {
-            background-color: #ffffff;
-            border-color: #d1d1d6;
-            box-shadow: 0 0 0 3px rgba(0,0,0,0.03);
-        }
-
-        .send-btn {
-            padding: 14px;
-            background-color: var(--accent);
-            color: white;
-            border-radius: 50%;
-            border: none;
-            cursor: pointer;
-            transition: transform 0.1s ease, background-color 0.2s ease;
-        }
-
-        .send-btn:hover { background-color: #000000; }
-        .send-btn:active { transform: scale(0.95); }
-
-        /* Login Overlay - Sangat Bersih */
-        #login-overlay {
-            position: fixed;
-            inset: 0;
-            z-index: 100;
-            background-color: #ffffff;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 32px;
-        }
-
-        /* Markdown Styling - Presisi & Rapih */
-        .prose { font-size: 14px; line-height: 1.6; }
-        .prose p { margin-bottom: 8px; }
-        .prose pre { background: #f4f4f4 !important; color: #333 !important; padding: 16px; border-radius: 12px; border: 1px solid #e5e5e5; overflow-x: auto; margin: 12px 0; }
-        .prose code { font-family: 'Fira Code', monospace; color: #d72b3f; font-size: 0.9em; background: rgba(0,0,0,0.03); padding: 2px 4px; border-radius: 4px; }
-        .prose ul, .prose ol { margin-left: 16px; margin-bottom: 8px; list-style-type: disc; }
-
-        /* Animation */
-        .fade-in { animation: fadeIn 0.3s ease-out forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-
+        #overlay { position: fixed; inset: 0; background: white; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; }
         .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <div id="login-overlay">
-        <div class="w-full max-w-xs text-center">
-            <h1 class="text-3xl font-semibold tracking-tighter mb-1 text-zinc-950">RHF AI</h1>
-            <p class="text-[10px] uppercase tracking-[0.3em] text-zinc-400 mb-16">Universal Neural Link</p>
-            
-            <button onclick="loginGoogle()" class="w-full flex items-center justify-center gap-3 py-4 border border-zinc-200 rounded-2xl text-sm font-medium hover:bg-zinc-50 transition-all active:scale-95 shadow-sm">
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/action/google.svg" width="18">
-                Lanjutkan dengan Email
-            </button>
-            <p class="mt-8 text-[11px] text-zinc-500 leading-relaxed px-2">
-                Masuk untuk mengaktifkan sinkronisasi Cloud Memory pribadi Anda.
-            </p>
-        </div>
+    <div id="overlay">
+        <h1 class="text-3xl font-bold tracking-tighter mb-2">RHF CORE</h1>
+        <p class="text-[10px] uppercase tracking-widest text-zinc-400 mb-12">Neural Identity System</p>
+        <button onclick="login()" class="w-full max-w-xs py-4 border border-zinc-200 rounded-2xl flex items-center justify-center gap-3 font-medium hover:bg-zinc-50 transition-all">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/action/google.svg" width="18">
+            Lanjutkan dengan Email
+        </button>
     </div>
 
-    <div id="app" class="app-wrapper hidden fade-in">
-        <header class="py-5 px-4 flex justify-between items-center bg-white border-bottom border-zinc-100 sticky top-0 z-10">
+    <div id="app" class="app-frame hidden">
+        <header class="p-5 border-b border-zinc-100 flex justify-between items-center">
             <div class="flex items-center gap-2">
                 <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span class="text-[11px] font-bold tracking-widest text-zinc-400 uppercase" id="user-name">SESSION</span>
+                <span class="text-[10px] font-bold tracking-widest opacity-30" id="u-name">...</span>
             </div>
-            <button onclick="logout()" class="text-[10px] font-semibold text-zinc-300 hover:text-red-600 uppercase transition-colors">Logout</button>
+            <button onclick="logout()" class="text-[10px] font-bold text-zinc-300">LOGOUT</button>
         </header>
 
-        <main id="chat-window" class="chat-container space-y-5"></main>
+        <main id="window" class="chat-area flex flex-col"></main>
 
-        <footer class="input-area">
-            <input type="text" id="userInput" 
-                   class="input-field"
-                   placeholder="Tanyakan atau bahas apapun..."
-                   onkeypress="if(event.key === 'Enter') sendChat()">
-            <button onclick="sendChat()" class="send-btn">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+        <footer class="input-box">
+            <input type="text" id="msgInput" class="input-field" placeholder="Bicarakan sesuatu..." onkeypress="if(event.key==='Enter') send()">
+            <button onclick="send()" class="btn-send">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
             </button>
         </footer>
     </div>
@@ -181,8 +67,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
     <script>
-        // Konfigurasi Firebase RHF
-        const firebaseConfig = {
+        const config = {
             apiKey: "AIzaSyDNFXLa8WGAqhLnc8RrLLTgP3nLWvXkd1w",
             authDomain: "rhf-confrims.firebaseapp.com",
             projectId: "rhf-confrims",
@@ -191,132 +76,75 @@
             appId: "1:631231605918:web:d42d4e34e9ea14b2d65f8f"
         };
 
-        firebase.initializeApp(firebaseConfig);
+        firebase.initializeApp(config);
         const auth = firebase.auth();
         const db = firebase.firestore();
-        let currentUser = null;
+        let user = null;
 
-        // Monitor Status Login
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                currentUser = user;
-                document.getElementById('login-overlay').classList.add('hidden');
+        auth.onAuthStateChanged(u => {
+            if(u) {
+                user = u;
+                document.getElementById('overlay').classList.add('hidden');
                 document.getElementById('app').classList.remove('hidden');
-                document.getElementById('user-name').innerText = user.displayName.split(' ')[0].toUpperCase();
-                
-                // Sinkronisasi & Pembersihan Otomatis (Cloud-based, Bukan Driver HP)
-                cleanCloudMemory();
+                document.getElementById('u-name').innerText = u.displayName.toUpperCase();
+                loadChat();
             } else {
-                document.getElementById('login-overlay').classList.remove('hidden');
-                document.getElementById('app').classList.add('hidden');
+                document.getElementById('overlay').classList.remove('hidden');
             }
         });
 
-        async function loginGoogle() {
-            const provider = new firebase.auth.GoogleAuthProvider();
-            await auth.signInWithPopup(provider);
-        }
-
+        async function login() { await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
         function logout() { auth.signOut(); }
 
-        // LOGIKA PEMBERSIHAN OTOMATIS (CLOUD MEMORY)
-        async function cleanCloudMemory() {
-            const threshold = new Date();
-            threshold.setDate(threshold.getDate() - 10); // Batas 10 hari
-
-            try {
-                const snap = await db.collection('chats').doc(currentUser.uid).collection('messages')
-                               .where('timestamp', '<', threshold).get();
-                
-                if (snap.empty) {
-                    loadHistory(); // Jika tidak ada yang dihapus, langsung load
-                    return;
-                }
-
-                const batch = db.batch();
-                snap.forEach(doc => batch.delete(doc.ref));
-                await batch.commit();
-                console.log("Cloud Memory Purge Successful (>10 days).");
-                loadHistory();
-            } catch (error) {
-                console.error("Purge Error:", error);
-                loadHistory(); // Tetap load history meskipun purge gagal
-            }
+        async function loadChat() {
+            const snap = await db.collection('chats').doc(user.uid).collection('messages').orderBy('timestamp', 'asc').get();
+            document.getElementById('window').innerHTML = '';
+            snap.forEach(doc => addBubble(doc.data().text, doc.data().role));
         }
 
-        async function loadHistory() {
-            const snap = await db.collection('chats').doc(currentUser.uid).collection('messages')
-                           .orderBy('timestamp', 'asc').get();
-            const window = document.getElementById('chat-window');
-            window.innerHTML = '';
-            snap.forEach(doc => appendMessage(doc.data().text, doc.data().role));
-        }
-
-        async function sendChat() {
-            const input = document.getElementById('userInput');
+        async function send() {
+            const input = document.getElementById('msgInput');
             const text = input.value.trim();
-            if (!text) return;
+            if(!text) return;
 
-            // Tampilkan pesan user instan
-            appendMessage(text, 'user');
+            addBubble(text, 'user');
             input.value = '';
-            
-            // Tampilkan loading '...'
-            const loadingId = appendMessage('...', 'ai');
-
-            // Ambil sejarah percakapan (maksimal 10 terakhir) untuk konteks AI
-            const snap = await db.collection('chats').doc(currentUser.uid).collection('messages')
-                           .orderBy('timestamp', 'desc').limit(10).get();
-            const history = snap.docs.map(doc => ({
-                role: doc.data().role === 'user' ? 'user' : 'assistant',
-                content: doc.data().text
-            })).reverse();
+            const loadId = addBubble('...', 'ai');
 
             try {
-                // Panggil Backend Vercel
                 const res = await fetch('/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ pesan: text, history: history })
+                    body: JSON.stringify({ pesan: text, history: [] })
                 });
-                
-                if (!res.ok) throw new Error("Backend Refused Connection.");
-                
                 const data = await res.json();
+                
+                await db.collection('chats').doc(user.uid).collection('messages').add({
+                    text: text, role: 'user', timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                await db.collection('chats').doc(user.uid).collection('messages').add({
+                    text: data.reply, role: 'ai', timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
 
-                // Simpan ke Firestore (Cloud)
-                const chatRef = db.collection('chats').doc(currentUser.uid).collection('messages');
-                await chatRef.add({ text: text, role: 'user', timestamp: firebase.firestore.FieldValue.serverTimestamp() });
-                await chatRef.add({ text: data.reply, role: 'ai', timestamp: firebase.firestore.FieldValue.serverTimestamp() });
-
-                // Update '...' dengan balasan asli
-                updateMessage(loadingId, data.reply);
-            } catch (e) {
-                updateMessage(loadingId, "Connection to Neural Link failed.");
+                updateBubble(loadId, data.reply);
+            } catch(e) {
+                updateBubble(loadId, "Gagal terhubung ke Cloud Memory.");
             }
         }
 
-        function appendMessage(content, role) {
+        function addBubble(txt, role) {
             const id = Date.now();
-            const window = document.getElementById('chat-window');
-            const wrapper = document.createElement('div');
-            wrapper.className = `flex ${role === 'user' ? 'justify-end' : 'justify-start'} fade-in mb-3`;
-            wrapper.innerHTML = `
-                <div class="${role === 'user' ? 'bubble-user' : 'bubble-ai'} p-4 max-w-[88%] shadow-none">
-                    <div class="prose ${role === 'user' ? 'prose-invert' : ''}" id="msg-${id}">
-                        ${marked.parse(content)}
-                    </div>
-                </div>
-            `;
-            window.appendChild(wrapper);
-            window.scrollTop = window.scrollHeight;
+            const div = document.createElement('div');
+            div.className = role === 'user' ? 'b-user' : 'b-ai';
+            div.innerHTML = `<div id="m-${id}">${marked.parse(txt)}</div>`;
+            document.getElementById('window').appendChild(div);
+            document.getElementById('window').scrollTop = document.getElementById('window').scrollHeight;
             return id;
         }
 
-        function updateMessage(id, content) {
-            const el = document.getElementById(`msg-${id}`);
-            if (el) el.innerHTML = marked.parse(content);
-            document.getElementById('chat-window').scrollTop = document.getElementById('chat-window').scrollHeight;
+        function updateBubble(id, txt) {
+            document.getElementById(`m-${id}`).innerHTML = marked.parse(txt);
+            document.getElementById('window').scrollTop = document.getElementById('window').scrollHeight;
         }
     </script>
 </body>
