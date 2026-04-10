@@ -3,144 +3,174 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RHF-AI | Neural Account</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <title>RHF-AI | Premium Core</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
-        :root { --bg: #09090b; --card: #18181b; --green: #22c55e; --blue: #2563eb; --text: #f4f4f5; }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); display: flex; justify-content: center; height: 100vh; }
-        #app { width: 100%; max-width: 800px; display: flex; flex-direction: column; border-left: 1px solid #27272a; border-right: 1px solid #27272a; }
-        header { padding: 15px; border-bottom: 1px solid #27272a; display: flex; justify-content: space-between; align-items: center; background: rgba(9,9,11,0.8); backdrop-filter: blur(10px); }
-        #chat-window { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 20px; }
-        .msg { max-width: 85%; padding: 12px 16px; border-radius: 15px; font-size: 15px; line-height: 1.6; }
-        .user { align-self: flex-end; background: var(--blue); border-radius: 15px 15px 0 15px; }
-        .ai { align-self: flex-start; background: var(--card); border: 1px solid #27272a; border-radius: 15px 15px 15px 0; }
-        .input-area { padding: 20px; border-top: 1px solid #27272a; display: flex; gap: 10px; }
-        input { flex: 1; background: var(--card); border: 1px solid #3f3f46; color: white; padding: 12px; border-radius: 10px; outline: none; }
-        button { background: var(--green); color: black; border: none; padding: 0 20px; border-radius: 10px; font-weight: bold; cursor: pointer; }
-        #login-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 100; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 20px; }
-        .hidden { display: none !important; }
-        code { background: #000; padding: 2px 5px; border-radius: 4px; color: #ff79c6; }
-        pre { background: #000; padding: 10px; border-radius: 8px; overflow-x: auto; margin: 10px 0; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #050505; color: #fafafa; }
+        .glass { background: rgba(18, 18, 18, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); }
+        .chat-container::-webkit-scrollbar { width: 5px; }
+        .chat-container::-webkit-scrollbar-thumb { background: #222; border-radius: 10px; }
+        
+        .bubble-user { background: linear-gradient(135deg, #2563eb, #1d4ed8); border-radius: 20px 20px 4px 20px; box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.2); }
+        .bubble-ai { background: #121212; border: 1px solid #262626; border-radius: 20px 20px 20px 4px; }
+        
+        pre { background: #000 !important; padding: 1rem; border-radius: 12px; margin: 1rem 0; border: 1px solid #333; overflow-x: auto; }
+        code { font-family: 'Fira Code', monospace; color: #10b981; }
+        
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Login Button Hover */
+        .btn-login { transition: all 0.3s ease; border: 1px solid rgba(34, 197, 94, 0.5); }
+        .btn-login:hover { background: #22c55e; color: #000; box-shadow: 0 0 20px rgba(34, 197, 94, 0.4); }
     </style>
 </head>
-<body>
+<body class="h-screen flex flex-col overflow-hidden">
 
-<div id="login-overlay">
-    <h1 style="color: var(--green); letter-spacing: 5px;">RHF CORE</h1>
-    <button onclick="loginGoogle()" style="padding: 15px 30px;">MASUK DENGAN GOOGLE</button>
-</div>
-
-<div id="app" class="hidden">
-    <header>
-        <span id="user-name" style="font-size: 12px; color: var(--green);"></span>
-        <button onclick="logout()" style="background: transparent; color: red; font-size: 10px; border: 1px solid red; padding: 5px;">LOGOUT</button>
-    </header>
-    <div id="chat-window"></div>
-    <div class="input-area">
-        <input type="text" id="userInput" placeholder="Tanyakan sesuatu..." autocomplete="off">
-        <button onclick="sendChat()">KIRIM</button>
+    <!-- Overlay Login Luxury -->
+    <div id="login-overlay" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black">
+        <div class="text-center">
+            <h1 class="text-4xl font-light tracking-[1em] text-white mb-2">RHF</h1>
+            <p class="text-zinc-500 text-sm tracking-widest mb-12 uppercase">Artificial Intelligence Core</p>
+            <button onclick="loginGoogle()" class="btn-login px-10 py-4 rounded-full text-sm font-semibold tracking-widest uppercase">
+                Initialize System
+            </button>
+        </div>
     </div>
-</div>
 
-<!-- Firebase SDKs -->
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <!-- Main UI -->
+    <div id="app" class="hidden flex-1 flex flex-col max-w-4xl mx-auto w-full">
+        <header class="p-6 flex justify-between items-center glass m-4 rounded-2xl">
+            <div class="flex items-center gap-3">
+                <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                <h2 class="text-sm font-semibold tracking-tighter opacity-80" id="user-name">SYSTEM ACTIVE</h2>
+            </div>
+            <button onclick="logout()" class="text-[10px] text-zinc-500 hover:text-red-400 uppercase tracking-tighter transition-colors">Terminate Session</button>
+        </header>
 
-<script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyDNFXLa8WGAqhLnc8RrLLTgP3nLWvXkd1w",
-        authDomain: "rhf-confrims.firebaseapp.com",
-        projectId: "rhf-confrims",
-        storageBucket: "rhf-confrims.firebasestorage.app",
-        messagingSenderId: "631231605918",
-        appId: "1:631231605918:web:d42d4e34e9ea14b2d65f8f"
-    };
+        <main id="chat-window" class="chat-container flex-1 overflow-y-auto px-6 py-4 space-y-8"></main>
 
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
+        <footer class="p-6">
+            <div class="relative max-w-3xl mx-auto">
+                <input type="text" id="userInput" 
+                       class="w-full glass bg-opacity-50 rounded-2xl py-5 px-6 outline-none focus:border-green-500/50 transition-all text-sm"
+                       placeholder="Diskusikan apapun dengan RHF-AI..."
+                       onkeypress="if(event.key === 'Enter') sendChat()">
+                <button onclick="sendChat()" class="absolute right-4 top-1/2 -translate-y-1/2 text-green-500 hover:text-green-400 text-xs font-bold tracking-widest uppercase px-4 py-2">
+                    Send
+                </button>
+            </div>
+            <p class="text-center text-[10px] text-zinc-600 mt-4 tracking-widest">RHF-CORE V2.1 • ENCRYPTED SESSION</p>
+        </footer>
+    </div>
 
-    let currentUser = null;
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
-    // Monitor Status Login
-    auth.onAuthStateChanged(user => {
-        if (user) {
-            currentUser = user;
-            document.getElementById('login-overlay').classList.add('hidden');
-            document.getElementById('app').classList.remove('hidden');
-            document.getElementById('user-name').innerText = user.displayName.toUpperCase();
-            loadHistory();
-        } else {
-            document.getElementById('login-overlay').classList.remove('hidden');
-            document.getElementById('app').classList.add('hidden');
-        }
-    });
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDNFXLa8WGAqhLnc8RrLLTgP3nLWvXkd1w",
+            authDomain: "rhf-confrims.firebaseapp.com",
+            projectId: "rhf-confrims",
+            storageBucket: "rhf-confrims.firebasestorage.app",
+            messagingSenderId: "631231605918",
+            appId: "1:631231605918:web:d42d4e34e9ea14b2d65f8f"
+        };
 
-    async function loginGoogle() {
-        const provider = new firebase.auth.GoogleAuthProvider();
-        await auth.signInWithPopup(provider);
-    }
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
 
-    function logout() { auth.signOut(); }
+        let currentUser = null;
 
-    async function sendChat() {
-        const input = document.getElementById('userInput');
-        const text = input.value.trim();
-        if (!text) return;
-
-        appendMessage(text, 'user');
-        input.value = '';
-
-        // Simpan ke Firestore (History)
-        await db.collection('chats').doc(currentUser.uid).collection('messages').add({
-            text: text, role: 'user', timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                currentUser = user;
+                document.getElementById('login-overlay').classList.add('hidden');
+                document.getElementById('app').classList.remove('hidden');
+                document.getElementById('user-name').innerText = user.displayName;
+                loadHistory();
+            } else {
+                document.getElementById('login-overlay').classList.remove('hidden');
+                document.getElementById('app').classList.add('hidden');
+            }
         });
 
-        const loadingId = appendMessage('...', 'ai');
-
-        try {
-            const res = await fetch('/api/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ pesan: text, uid: currentUser.uid })
-            });
-            const data = await res.json();
-            
-            // Simpan balasan AI ke Firestore
-            await db.collection('chats').doc(currentUser.uid).collection('messages').add({
-                text: data.reply, role: 'ai', timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            });
-
-            updateMessage(loadingId, data.reply);
-        } catch (e) {
-            updateMessage(loadingId, "Sistem sibuk.");
+        async function loginGoogle() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            await auth.signInWithPopup(provider);
         }
-    }
 
-    function appendMessage(content, role) {
-        const id = Date.now();
-        const div = document.createElement('div');
-        div.className = `msg ${role}`;
-        div.id = `msg-${id}`;
-        div.innerHTML = marked.parse(content);
-        document.getElementById('chat-window').appendChild(div);
-        document.getElementById('chat-window').scrollTop = document.getElementById('chat-window').scrollHeight;
-        return id;
-    }
+        function logout() { auth.signOut(); }
 
-    function updateMessage(id, content) {
-        document.getElementById(`msg-${id}`).innerHTML = marked.parse(content);
-    }
+        async function sendChat() {
+            const input = document.getElementById('userInput');
+            const text = input.value.trim();
+            if (!text) return;
 
-    async function loadHistory() {
-        const snapshot = await db.collection('chats').doc(currentUser.uid)
-            .collection('messages').orderBy('timestamp', 'asc').get();
-        document.getElementById('chat-window').innerHTML = '';
-        snapshot.forEach(doc => appendMessage(doc.data().text, doc.data().role));
-    }
-</script>
+            appendMessage(text, 'user');
+            input.value = '';
+
+            const loadingId = appendMessage('Memproses...', 'ai');
+
+            try {
+                const res = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pesan: text, uid: currentUser.uid })
+                });
+                
+                const data = await res.json();
+                
+                // Simpan ke Firestore
+                await db.collection('chats').doc(currentUser.uid).collection('messages').add({
+                    text: text, role: 'user', timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                await db.collection('chats').doc(currentUser.uid).collection('messages').add({
+                    text: data.reply, role: 'ai', timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                updateMessage(loadingId, data.reply);
+            } catch (e) {
+                updateMessage(loadingId, "Neural link failure. Cek koneksi server.");
+            }
+        }
+
+        function appendMessage(content, role) {
+            const id = Date.now();
+            const window = document.getElementById('chat-window');
+            const wrapper = document.createElement('div');
+            wrapper.className = `flex ${role === 'user' ? 'justify-end' : 'justify-start'} fade-in`;
+            
+            wrapper.innerHTML = `
+                <div class="message ${role === 'user' ? 'bubble-user' : 'bubble-ai'} msg p-5 max-w-[85%]">
+                    <div class="text-[10px] uppercase tracking-widest opacity-40 mb-2">${role === 'user' ? 'Radit' : 'RHF-AI'}</div>
+                    <div class="prose prose-invert text-sm leading-relaxed prose-green" id="msg-${id}">
+                        ${marked.parse(content)}
+                    </div>
+                </div>
+            `;
+            window.appendChild(wrapper);
+            window.scrollTop = window.scrollHeight;
+            return id;
+        }
+
+        function updateMessage(id, content) {
+            const el = document.getElementById(`msg-${id}`);
+            if (el) el.innerHTML = marked.parse(content);
+            document.getElementById('chat-window').scrollTop = document.getElementById('chat-window').scrollHeight;
+        }
+
+        async function loadHistory() {
+            const snapshot = await db.collection('chats').doc(currentUser.uid)
+                .collection('messages').orderBy('timestamp', 'asc').limit(20).get();
+            document.getElementById('chat-window').innerHTML = '';
+            snapshot.forEach(doc => appendMessage(doc.data().text, doc.data().role));
+        }
+    </script>
 </body>
 </html>
