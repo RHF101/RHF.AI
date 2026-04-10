@@ -3,251 +3,144 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RHF-AI | Neural Core</title>
-    <!-- Google Fonts: Inter -->
+    <title>RHF-AI | Neural Account</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
-        :root {
-            --bg-dark: #09090b;
-            --card-dark: #18181b;
-            --accent-green: #22c55e;
-            --user-blue: #2563eb;
-            --text-main: #f4f4f5;
-            --text-dim: #a1a1aa;
-        }
-
+        :root { --bg: #09090b; --card: #18181b; --green: #22c55e; --blue: #2563eb; --text: #f4f4f5; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            display: flex;
-            justify-content: center;
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        /* Container Utama */
-        #app {
-            width: 100%;
-            max-width: 800px;
-            display: flex;
-            flex-direction: column;
-            border-left: 1px solid #27272a;
-            border-right: 1px solid #27272a;
-        }
-
-        /* Header Mewah */
-        header {
-            padding: 20px;
-            text-align: center;
-            background: rgba(9, 9, 11, 0.8);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid #27272a;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-
-        header h1 {
-            font-size: 1.2rem;
-            letter-spacing: 3px;
-            color: var(--accent-green);
-            font-weight: 600;
-        }
-
-        /* Area Percakapan */
-        #chat-window {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 25px;
-            scrollbar-width: thin;
-            scrollbar-color: #3f3f46 transparent;
-        }
-
-        /* Bubble Chat GPT Style */
-        .message {
-            display: flex;
-            flex-direction: column;
-            max-width: 85%;
-            animation: slideUp 0.3s ease-out;
-        }
-
-        .user {
-            align-self: flex-end;
-        }
-
-        .ai {
-            align-self: flex-start;
-        }
-
-        .bubble {
-            padding: 14px 18px;
-            font-size: 15px;
-            line-height: 1.6;
-            position: relative;
-        }
-
-        .user .bubble {
-            background-color: var(--user-blue);
-            color: white;
-            border-radius: 20px 20px 4px 20px;
-            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.2);
-        }
-
-        .ai .bubble {
-            background-color: var(--card-dark);
-            border: 1px solid #27272a;
-            color: var(--text-main);
-            border-radius: 20px 20px 20px 4px;
-        }
-
-        .label {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 5px;
-            color: var(--text-dim);
-        }
-
-        .user .label { text-align: right; }
-
-        /* Input Bar Minimalis */
-        .input-container {
-            padding: 20px;
-            background: var(--bg-dark);
-            border-top: 1px solid #27272a;
-        }
-
-        .input-wrapper {
-            display: flex;
-            background: var(--card-dark);
-            border: 1px solid #3f3f46;
-            border-radius: 12px;
-            padding: 5px 15px;
-            align-items: center;
-            transition: border 0.3s;
-        }
-
-        .input-wrapper:focus-within {
-            border-color: var(--accent-green);
-        }
-
-        input {
-            flex: 1;
-            background: transparent;
-            border: none;
-            color: white;
-            padding: 12px 0;
-            outline: none;
-            font-size: 15px;
-        }
-
-        button {
-            background: transparent;
-            border: none;
-            color: var(--accent-green);
-            font-weight: bold;
-            cursor: pointer;
-            padding-left: 10px;
-            transition: transform 0.2s;
-        }
-
-        button:active { transform: scale(0.9); }
-
-        /* Animasi */
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(15px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Responsif HP */
-        @media (max-width: 600px) {
-            #app { border: none; }
-            .message { max-width: 90%; }
-        }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); display: flex; justify-content: center; height: 100vh; }
+        #app { width: 100%; max-width: 800px; display: flex; flex-direction: column; border-left: 1px solid #27272a; border-right: 1px solid #27272a; }
+        header { padding: 15px; border-bottom: 1px solid #27272a; display: flex; justify-content: space-between; align-items: center; background: rgba(9,9,11,0.8); backdrop-filter: blur(10px); }
+        #chat-window { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+        .msg { max-width: 85%; padding: 12px 16px; border-radius: 15px; font-size: 15px; line-height: 1.6; }
+        .user { align-self: flex-end; background: var(--blue); border-radius: 15px 15px 0 15px; }
+        .ai { align-self: flex-start; background: var(--card); border: 1px solid #27272a; border-radius: 15px 15px 15px 0; }
+        .input-area { padding: 20px; border-top: 1px solid #27272a; display: flex; gap: 10px; }
+        input { flex: 1; background: var(--card); border: 1px solid #3f3f46; color: white; padding: 12px; border-radius: 10px; outline: none; }
+        button { background: var(--green); color: black; border: none; padding: 0 20px; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        #login-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 100; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 20px; }
+        .hidden { display: none !important; }
+        code { background: #000; padding: 2px 5px; border-radius: 4px; color: #ff79c6; }
+        pre { background: #000; padding: 10px; border-radius: 8px; overflow-x: auto; margin: 10px 0; }
     </style>
 </head>
 <body>
 
-<div id="app">
+<div id="login-overlay">
+    <h1 style="color: var(--green); letter-spacing: 5px;">RHF CORE</h1>
+    <button onclick="loginGoogle()" style="padding: 15px 30px;">MASUK DENGAN GOOGLE</button>
+</div>
+
+<div id="app" class="hidden">
     <header>
-        <h1>RHF CORE SYSTEM</h1>
+        <span id="user-name" style="font-size: 12px; color: var(--green);"></span>
+        <button onclick="logout()" style="background: transparent; color: red; font-size: 10px; border: 1px solid red; padding: 5px;">LOGOUT</button>
     </header>
-
-    <div id="chat-window">
-        <!-- Pesan pertama dari AI -->
-        <div class="message ai">
-            <div class="label">RHF-AI</div>
-            <div class="bubble">Sistem berhasil dideploy. Selamat datang, Radit. Apa yang ingin kamu kembangkan hari ini?</div>
-        </div>
-    </div>
-
-    <div class="input-container">
-        <div class="input-wrapper">
-            <input type="text" id="userInput" placeholder="Ketik pesan..." autocomplete="off">
-            <button onclick="sendChat()">KIRIM</button>
-        </div>
+    <div id="chat-window"></div>
+    <div class="input-area">
+        <input type="text" id="userInput" placeholder="Tanyakan sesuatu..." autocomplete="off">
+        <button onclick="sendChat()">KIRIM</button>
     </div>
 </div>
 
-<script>
-    const chatWindow = document.getElementById('chat-window');
-    const userInput = document.getElementById('userInput');
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
-    // Fungsi kirim chat (Enter)
-    userInput.addEventListener("keypress", (e) => {
-        if (e.key === "Enter") sendChat();
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyDNFXLa8WGAqhLnc8RrLLTgP3nLWvXkd1w",
+        authDomain: "rhf-confrims.firebaseapp.com",
+        projectId: "rhf-confrims",
+        storageBucket: "rhf-confrims.firebasestorage.app",
+        messagingSenderId: "631231605918",
+        appId: "1:631231605918:web:d42d4e34e9ea14b2d65f8f"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    let currentUser = null;
+
+    // Monitor Status Login
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            currentUser = user;
+            document.getElementById('login-overlay').classList.add('hidden');
+            document.getElementById('app').classList.remove('hidden');
+            document.getElementById('user-name').innerText = user.displayName.toUpperCase();
+            loadHistory();
+        } else {
+            document.getElementById('login-overlay').classList.remove('hidden');
+            document.getElementById('app').classList.add('hidden');
+        }
     });
 
+    async function loginGoogle() {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        await auth.signInWithPopup(provider);
+    }
+
+    function logout() { auth.signOut(); }
+
     async function sendChat() {
-        const text = userInput.value.trim();
+        const input = document.getElementById('userInput');
+        const text = input.value.trim();
         if (!text) return;
 
-        // User Chat
         appendMessage(text, 'user');
-        userInput.value = '';
+        input.value = '';
 
-        // Tampilkan loading sederhana
+        // Simpan ke Firestore (History)
+        await db.collection('chats').doc(currentUser.uid).collection('messages').add({
+            text: text, role: 'user', timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
         const loadingId = appendMessage('...', 'ai');
 
         try {
             const res = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ pesan: text })
+                body: JSON.stringify({ pesan: text, uid: currentUser.uid })
+            });
+            const data = await res.json();
+            
+            // Simpan balasan AI ke Firestore
+            await db.collection('chats').doc(currentUser.uid).collection('messages').add({
+                text: data.reply, role: 'ai', timestamp: firebase.firestore.FieldValue.serverTimestamp()
             });
 
-            const data = await res.json();
             updateMessage(loadingId, data.reply);
-        } catch (error) {
-            updateMessage(loadingId, "Koneksi terputus. Pastikan API Key Groq sudah benar.");
+        } catch (e) {
+            updateMessage(loadingId, "Sistem sibuk.");
         }
     }
 
     function appendMessage(content, role) {
         const id = Date.now();
-        const msgDiv = document.createElement('div');
-        msgDiv.className = `message ${role}`;
-        msgDiv.innerHTML = `
-            <div class="label">${role === 'user' ? 'Radit' : 'RHF-AI'}</div>
-            <div class="bubble" id="msg-${id}">${content}</div>
-        `;
-        chatWindow.appendChild(msgDiv);
-        chatWindow.scrollTop = chatWindow.scrollHeight;
+        const div = document.createElement('div');
+        div.className = `msg ${role}`;
+        div.id = `msg-${id}`;
+        div.innerHTML = marked.parse(content);
+        document.getElementById('chat-window').appendChild(div);
+        document.getElementById('chat-window').scrollTop = document.getElementById('chat-window').scrollHeight;
         return id;
     }
 
     function updateMessage(id, content) {
-        const el = document.getElementById(`msg-${id}`);
-        if (el) el.innerText = content;
-        chatWindow.scrollTop = chatWindow.scrollHeight;
+        document.getElementById(`msg-${id}`).innerHTML = marked.parse(content);
+    }
+
+    async function loadHistory() {
+        const snapshot = await db.collection('chats').doc(currentUser.uid)
+            .collection('messages').orderBy('timestamp', 'asc').get();
+        document.getElementById('chat-window').innerHTML = '';
+        snapshot.forEach(doc => appendMessage(doc.data().text, doc.data().role));
     }
 </script>
-
 </body>
 </html>
