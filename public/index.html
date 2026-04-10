@@ -3,192 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RHF NEXUS - GLOBAL CORE</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>RHF-AI | Core System</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
-        body { font-family: 'Inter', sans-serif; }
-        .sidebar-dark { background-color: #202123; }
-        .ai-bubble { background-color: #f7f7f8; border: 1px solid #e5e5e5; }
-        .user-bubble { background-color: #ffffff; border: 1px solid #e1e1e1; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        
-        /* Mobile Menu Style */
-        #sidebar { transition: transform 0.3s ease-in-out; }
-        .overlay { display: none; background: rgba(0,0,0,0.5); }
-        @media (max-width: 768px) {
-            .overlay.active { display: block; position: fixed; inset: 0; z-index: 40; }
+        :root {
+            --bg-color: #0d0d0d;
+            --user-bubble: #2563eb;
+            --ai-bubble: #1e1e1e;
+            --text-color: #e5e5e5;
         }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-color); color: var(--text-color); margin: 0; display: flex; flex-direction: column; height: 100vh; }
+        
+        /* Header Minimalis */
+        header { padding: 15px; text-align: center; border-bottom: 1px solid #333; font-weight: bold; letter-spacing: 2px; color: #00ff00; }
+
+        /* Area Chat */
+        #chat-container { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+
+        /* Balon Chat */
+        .msg { max-width: 80%; padding: 12px 16px; line-height: 1.5; font-size: 15px; position: relative; }
+        
+        .user { 
+            align-self: flex-end; 
+            background: var(--user-bubble); 
+            color: white; 
+            border-radius: 20px 20px 0px 20px; /* Lengkungan Kanan */
+        }
+
+        .ai { 
+            align-self: flex-start; 
+            background: var(--ai-bubble); 
+            border: 1px solid #333;
+            border-radius: 20px 20px 20px 0px; /* Lengkungan Kiri */
+        }
+
+        /* Input Area */
+        .input-area { padding: 20px; background: #161616; display: flex; gap: 10px; border-top: 1px solid #333; }
+        input { flex: 1; background: #000; border: 1px solid #444; color: white; padding: 12px; border-radius: 10px; outline: none; }
+        button { background: #00ff00; color: black; border: none; padding: 0 20px; border-radius: 10px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
-<body class="bg-white flex h-screen overflow-hidden">
+<body>
+    <header>RHF-CORE V2</header>
+    <div id="chat-container"></div>
+    <div class="input-area">
+        <input type="text" id="userInput" placeholder="Ketik perintah..." onkeypress="if(event.key === 'Enter') sendChat()">
+        <button onclick="sendChat()">KIRIM</button>
+    </div>
 
-    <!-- OVERLAY UNTUK HP -->
-    <div id="overlay" class="overlay" onclick="toggleSidebar()"></div>
-
-    <!-- SIDEBAR (Didesain untuk semua Gadget) -->
-    <aside id="sidebar" class="sidebar-dark w-64 flex flex-col fixed inset-y-0 left-0 z-50 transform -translate-x-full md:translate-x-0 md:relative transition-transform text-gray-200">
-        <div class="p-4 flex justify-between items-center md:hidden">
-            <span class="font-bold text-red-500 text-xs tracking-widest">RHF NEXUS</span>
-            <button onclick="toggleSidebar()"><i class="fa fa-times text-xl"></i></button>
-        </div>
-
-        <button onclick="window.location.reload()" class="m-3 p-3 border border-gray-600 rounded-lg hover:bg-gray-700 transition flex items-center gap-3 text-sm font-semibold">
-            <i class="fa fa-plus"></i> New Chat
-        </button>
-
-        <div id="chat-history" class="flex-1 overflow-y-auto px-3 space-y-2 no-scrollbar">
-            <p class="text-[10px] uppercase tracking-widest text-gray-500 font-bold mt-4 mb-2 px-2 italic">Riwayat Sesi</p>
-        </div>
-
-        <div class="p-4 border-t border-gray-700">
-            <div id="login-section">
-                <button onclick="loginRHF()" class="w-full py-3 bg-white text-black rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-gray-200 active:scale-95 transition">
-                    <i class="fab fa-google"></i> Login Google
-                </button>
-            </div>
-            <div id="profile-section" class="hidden flex items-center gap-3 bg-gray-800 p-2 rounded-lg border border-gray-700">
-                <img id="user-avatar" class="w-9 h-9 rounded-full border border-red-500 shadow-lg">
-                <div class="overflow-hidden">
-                    <p id="user-name-display" class="text-xs font-bold truncate"></p>
-                    <button onclick="logoutRHF()" class="text-[9px] text-red-400 uppercase tracking-tighter hover:underline">Logout</button>
-                </div>
-            </div>
-        </div>
-    </aside>
-
-    <!-- MAIN AREA -->
-    <main class="flex-1 flex flex-col bg-white relative">
-        <header class="h-16 border-b flex items-center px-4 md:px-6 bg-white/90 backdrop-blur-md sticky top-0 z-20">
-            <button onclick="toggleSidebar()" class="mr-4 md:hidden text-slate-800">
-                <i class="fa fa-bars text-xl"></i>
-            </button>
-            <div class="flex items-center gap-2">
-                <span class="w-3 h-3 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,1)]"></span>
-                <h1 class="font-bold text-slate-900 tracking-tighter">RHF-CORE <span class="text-gray-400 font-normal">V2</span></h1>
-            </div>
-        </header>
-
-        <!-- AREA CHAT -->
-        <div id="chat-display" class="flex-1 overflow-y-auto p-4 md:px-32 space-y-6 pt-10 pb-40 no-scrollbar">
-            <div class="ai-bubble p-5 rounded-2xl max-w-3xl shadow-sm">
-                <p class="text-[10px] font-black text-red-600 mb-2 uppercase tracking-tighter italic text-right">ROOT@CORE</p>
-                <p id="status-text" class="text-sm text-slate-700 leading-relaxed font-medium text-center italic">IDENTIFIKASI DIPERLUKAN. SILAHKAN LOGIN.</p>
-            </div>
-        </div>
-
-        <!-- INPUT BOX (Fixed untuk Mobile & Desktop) -->
-        <div class="absolute bottom-0 left-0 w-full p-4 md:p-6 bg-gradient-to-t from-white via-white to-transparent">
-            <div class="max-w-3xl mx-auto relative group">
-                <input type="text" id="user-input" 
-                    class="w-full p-4 pr-14 rounded-2xl border border-gray-300 focus:outline-none focus:border-slate-800 shadow-2xl text-sm transition-all" 
-                    placeholder="Masukkan perintah...">
-                <button onclick="handleSend()" class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-900 transition-colors">
-                    <i class="fa fa-paper-plane text-xl"></i>
-                </button>
-            </div>
-        </div>
-    </main>
-
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyCs7Vnysf25BwhN2-fPTODd48xwzbPkbzI",
-            authDomain: "rhf-shop-mafia-8d2e5.firebaseapp.com",
-            projectId: "rhf-shop-mafia-8d2e5",
-            storageBucket: "rhf-shop-mafia-8d2e5.firebasestorage.app",
-            messagingSenderId: "158711184948",
-            appId: "1:158711184948:web:9223f07fa6658601189461"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const provider = new GoogleAuthProvider();
-
-        // UI Helpers
-        window.toggleSidebar = () => {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('overlay');
-            sidebar.classList.toggle('-translate-x-full');
-            overlay.classList.toggle('active');
-        };
-
-        window.loginRHF = () => signInWithPopup(auth, provider).catch(e => alert("Error: " + e.message));
-        window.logoutRHF = () => signOut(auth);
-
-        onAuthStateChanged(auth, (user) => {
-            const statusEl = document.getElementById('status-text');
-            if (user) {
-                document.getElementById('login-section').classList.add('hidden');
-                document.getElementById('profile-section').classList.remove('hidden');
-                document.getElementById('user-avatar').src = user.photoURL;
-                document.getElementById('user-name-display').innerText = user.displayName;
-                statusEl.innerHTML = `Selamat Datang <b>${user.displayName}</b>. Sistem siap digunakan.`;
-                loadHistory(user.uid);
-            } else {
-                document.getElementById('login-section').classList.remove('hidden');
-                document.getElementById('profile-section').classList.add('hidden');
-                statusEl.innerText = "IDENTIFIKASI DIPERLUKAN. SILAHKAN LOGIN.";
-            }
-        });
-
-        window.handleSend = async () => {
-            const input = document.getElementById('user-input');
-            const msg = input.value;
-            if(!msg) return;
-
-            appendMessage('USER', msg);
-            input.value = '';
-
-            try {
-                // MASUKKAN LINK NGROK TERBARU DARI COLAB DI SINI
-                const response = await fetch("https://ALAMAT-NGROK-KAMU.ngrok-free.app/api/generate", {
-                    method: 'POST',
-                    body: JSON.stringify({ model: 'rhf-core', prompt: msg, stream: false })
-                });
-                const data = await response.json();
-                appendMessage('CORE', data.response);
-
-                if(auth.currentUser) {
-                    await addDoc(collection(db, "chats"), {
-                        uid: auth.currentUser.uid,
-                        text: msg,
-                        response: data.response,
-                        time: Date.now()
-                    });
-                }
-            } catch (e) {
-                appendMessage('SYSTEM', 'Gagal terhubung ke Colab. Cek link Ngrok kamu!');
-            }
-        };
-
-        function appendMessage(role, txt) {
-            const display = document.getElementById('chat-display');
-            const div = document.createElement('div');
-            div.className = role === 'CORE' ? 'ai-bubble p-5 rounded-2xl max-w-3xl shadow-sm' : 'user-bubble p-5 rounded-2xl max-w-3xl ml-auto shadow-sm border border-gray-100';
-            div.innerHTML = `<p class="text-[9px] font-bold ${role === 'CORE' ? 'text-red-600' : 'text-slate-400'} mb-1 uppercase tracking-tighter">${role}</p><p class="text-sm leading-relaxed">${txt}</p>`;
-            display.appendChild(div);
-            display.scrollTop = display.scrollHeight;
-        }
-
-        function loadHistory(uid) {
-            const q = query(collection(db, "chats"), where("uid", "==", uid), orderBy("time", "desc"));
-            onSnapshot(q, (snap) => {
-                const hist = document.getElementById('chat-history');
-                hist.innerHTML = '<p class="text-[10px] uppercase tracking-widest text-gray-500 font-bold mt-4 mb-2 px-2 italic text-center">History</p>';
-                snap.forEach(doc => {
-                    const div = document.createElement('div');
-                    div.className = "p-3 text-xs hover:bg-gray-800 rounded-lg cursor-pointer truncate text-gray-400 border-b border-gray-800";
-                    div.innerText = doc.data().text;
-                    hist.appendChild(div);
-                });
-            });
-        }
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
