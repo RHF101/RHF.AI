@@ -41,7 +41,15 @@ export default async function handler(req, res) {
     });
 
     const data = await response.json();
+// Ambil riwayat dari database, lalu masukkan ke array messages
+const history = await getChatHistoryFromFirebase(userId); 
 
+const messages = [
+  { role: "system", content: "Kamu adalah RHF-AI yang punya ingatan jangka panjang..." },
+  ...history, // Ini yang bikin dia ingat chat sebelumnya
+  { role: "user", content: pesan }
+];
+    
     // 4. Penanganan Error dari Provider
     if (data.error) {
       console.error("Groq API Error:", data.error);
