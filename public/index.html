@@ -4,75 +4,62 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
-    <title>RHF NEXUS v5</title>
     <style>
-        body { background-color: #f4f7f6; color: #1a1a1a; font-family: 'Inter', sans-serif; }
-        .sidebar { background-color: #ffffff; width: 280px; border-right: 1px solid #e5e7eb; transition: 0.3s; position: fixed; height: 100%; left: -280px; z-index: 100; }
+        body { background-color: #f8f9fa; color: #1a1a1a; font-family: sans-serif; }
+        .sidebar { background: #ffffff; width: 280px; position: fixed; height: 100%; left: -280px; transition: 0.3s; z-index: 100; border-right: 1px solid #eee; }
         .sidebar.active { left: 0; }
-        .msg-user { align-self: flex-start; background: #ffffff; color: #1a1a1a; border-radius: 20px 20px 20px 5px; border: 1px solid #e5e7eb; padding: 15px; max-width: 85%; }
-        .msg-ai { align-self: flex-end; background: #000000; color: #ffffff; border-radius: 20px 20px 5px 20px; padding: 15px; max-width: 85%; }
-        pre { background: #1a1a1a; color: #00ffcc; padding: 15px; border-radius: 15px; margin-top: 10px; font-family: monospace; font-size: 0.8rem; overflow-x: auto; }
-        #input-area { background: #ffffff; border-radius: 30px; border: 1px solid #e5e7eb; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
-        img.generated-image { border-radius: 15px; margin-top: 10px; width: 100%; max-width: 500px; border: 2px solid #333; }
-        .loading-image { color: #555; font-style: italic; font-size: 0.8rem; }
+        .msg-user { align-self: flex-start; background: #ffffff; border: 1px solid #eee; border-radius: 18px 18px 18px 5px; padding: 12px 16px; max-width: 85%; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .msg-ai { align-self: flex-end; background: #000; color: #fff; border-radius: 18px 18px 5px 18px; padding: 12px 16px; max-width: 85%; }
+        pre { background: #111; color: #0f8; padding: 12px; border-radius: 12px; font-family: monospace; font-size: 0.8rem; overflow-x: auto; margin-top: 8px; }
+        img { border-radius: 15px; margin-top: 10px; width: 100%; border: 1px solid #ddd; }
+        #input-area { background: #fff; border-radius: 25px; border: 1px solid #ddd; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
         @media (min-width: 768px) { .sidebar { left: 0; } .main-content { margin-left: 280px; } }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
     <div id="side" class="sidebar flex flex-col p-5">
         <h2 class="font-bold text-xl mb-6">RHF <span class="text-gray-400">Nexus</span></h2>
-        <button onclick="newChat()" class="w-full text-center py-3 bg-black text-white rounded-2xl mb-4 hover:opacity-80 transition">+ Chat Baru 🚀</button>
+        <button onclick="newChat()" class="w-full py-3 bg-black text-white rounded-xl mb-4 font-medium">+ New Session</button>
         <div id="chat-list" class="flex-1 overflow-y-auto space-y-2 text-sm"></div>
     </div>
 
     <div class="main-content flex-1 flex flex-col w-full">
-        <header class="p-4 border-b flex justify-between items-center bg-white/50 backdrop-blur-md sticky top-0 z-10">
+        <header class="p-4 border-b flex justify-between items-center bg-white/70 backdrop-blur-md">
             <button onclick="toggleSide()" class="md:hidden text-2xl">☰</button>
-            <div class="font-bold text-lg">RHF UNRESTRICTED</div>
+            <div class="font-bold tracking-widest text-sm">RHF CORE</div>
             <div></div>
         </header>
-
-        <main id="chat-window" class="flex-1 overflow-y-auto p-6 md:p-10 flex flex-col space-y-6"></main>
-
-        <footer class="p-6">
-            <div id="input-area" class="max-w-3xl mx-auto flex items-end p-2 px-5">
-                <textarea id="msg" rows="1" class="flex-1 bg-transparent outline-none py-3 resize-none text-sm" placeholder="Tulis instruksi peretasan atau gambar..."></textarea>
-                <button onclick="send()" class="mb-1 ml-3 bg-black text-white p-3 rounded-full">➤</button>
+        <main id="chat-window" class="flex-1 overflow-y-auto p-5 flex flex-col space-y-4"></main>
+        <footer class="p-4">
+            <div id="input-area" class="max-w-3xl mx-auto flex items-end p-2 px-4">
+                <textarea id="msg" rows="1" class="flex-1 bg-transparent outline-none py-2 resize-none text-sm" placeholder="Input command..."></textarea>
+                <button onclick="send()" class="mb-1 ml-2 bg-black text-white p-2 rounded-full">➤</button>
             </div>
         </footer>
     </div>
 
     <script>
         let currentId = Date.now();
-        let sessions = JSON.parse(localStorage.getItem('rhf_core_v5')) || {};
+        let sessions = JSON.parse(localStorage.getItem('rhf_final')) || {};
         const win = document.getElementById('chat-window');
 
         function toggleSide() { document.getElementById('side').classList.toggle('active'); }
 
-        function generateImage(prompt) {
-            // Menggunakan API Flux lewat pollinations.ai (Lebih cepat, berkualitas, dan bebas)
-            const seed = Math.floor(Math.random() * 1000000);
-            return `<img src="https://pollinations.ai/p/${encodeURIComponent(prompt)}?width=1024&height=1024&seed=${seed}&model=flux" class="generated-image" onload="this.previousSibling.remove()" onerror="this.onerror=null; this.src='error_image.png';"><div class="loading-image">Sedang merender gambar RHF... ✨</div>`;
-        }
-
-        function formatContent(text) {
-            // Cek apakah AI memberikan instruksi gambar rahasia
-            if (text.startsWith("RHF_IMG|")) {
-                const prompt = text.split("|")[1];
-                return generateImage(prompt);
+        function format(t) {
+            if (t.includes("RHF_IMG|")) {
+                const p = t.split("RHF_IMG|")[1].trim();
+                return `<img src="https://pollinations.ai/p/${encodeURIComponent(p)}?width=1024&height=1024&seed=${Math.random()}&model=flux">`;
             }
-            // Format Kode dan Teks
-            text = text.replace(/```([\s\S]*?)```/g, '<pre>$1</pre>');
-            return text.replace(/\n/g, '<br>');
+            return t.replace(/```([\s\S]*?)```/g, '<pre>$1</pre>').replace(/\n/g, '<br>');
         }
 
         function renderChat() {
             win.innerHTML = "";
             (sessions[currentId] || []).forEach(m => {
-                const bubble = document.createElement('div');
-                bubble.className = `p-4 text-sm ${m.role === 'user' ? 'msg-user' : 'msg-ai'}`;
-                bubble.innerHTML = formatContent(m.content);
-                win.appendChild(bubble);
+                const b = document.createElement('div');
+                b.className = m.role === 'user' ? 'msg-user' : 'msg-ai';
+                b.innerHTML = format(m.content);
+                win.appendChild(b);
             });
             win.scrollTop = win.scrollHeight;
         }
@@ -89,26 +76,25 @@
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ messages: sessions[currentId] })
             });
-            const data = await res.json();
-            sessions[currentId].push(data.choices[0].message);
-            localStorage.setItem('rhf_core_v5', JSON.stringify(sessions));
+            const d = await res.json();
+            sessions[currentId].push(d.choices[0].message);
+            localStorage.setItem('rhf_final', JSON.stringify(sessions));
             renderChat();
             renderList();
         }
 
         function renderList() {
-            const list = document.getElementById('chat-list');
-            list.innerHTML = "";
+            const l = document.getElementById('chat-list'); l.innerHTML = "";
             Object.keys(sessions).reverse().forEach(id => {
-                const item = document.createElement('div');
-                item.className = `p-3 rounded-2xl cursor-pointer truncate ${id == currentId ? 'bg-gray-100 font-bold' : 'hover:bg-gray-50'}`;
-                item.innerText = sessions[id][0]?.content || "SESSION_VOID 💬";
-                item.onclick = () => { currentId = id; renderChat(); if(window.innerWidth < 768) toggleSide(); };
-                list.appendChild(item);
+                const i = document.createElement('div');
+                i.className = `p-3 rounded-xl cursor-pointer truncate ${id == currentId ? 'bg-gray-100 font-bold' : ''}`;
+                i.innerText = sessions[id][0]?.content || "New Session";
+                i.onclick = () => { currentId = id; renderChat(); if(window.innerWidth < 768) toggleSide(); };
+                l.appendChild(i);
             });
         }
 
-        function newChat() { currentId = Date.now(); sessions[currentId] = []; renderChat(); renderList(); if(window.innerWidth < 768) toggleSide(); }
+        function newChat() { currentId = Date.now(); sessions[currentId] = []; renderChat(); renderList(); }
         renderList(); renderChat();
     </script>
 </body>
