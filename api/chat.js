@@ -1,77 +1,75 @@
 export default async function handler(req, res) {
-  // Hanya izinkan POST
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Akses Ditolak' });
-  }
-
-  const { pesan, history = [] } = req.body;
-
-  try {
-    // 1. Susun struktur pesan (System + History + Pesan Baru)
-    // History ini dikirim dari frontend agar AI punya ingatan
-    const messages = [
-      {
-        role: "system",
-        content: `PROTOKOL RHF-CORE AKTIF. 
-        Identitas: RHF-AI (Advanced Intelligence). 
-        Kreator: Radit Tiya. 
-        Kepribadian: Profesional, elegan, super logis, dan mendalam. 
-        Aturan: Jangan bertele-tele, berikan solusi teknis yang tajam, dan gunakan format Markdown yang rapi untuk kode.`
-      },
-      ...history.slice(-6), // Ambil 6 percakapan terakhir agar ingatan tetap tajam tapi hemat kuota
-      { role: "user", content: pesan }
-    ];
-
-    // 2. Koneksi ke Groq LPU (Speed priorititas)
-    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        // Menggunakan model paling cerdas (Llama 3.3 70B) untuk hasil super logis
-        model: "llama-3.3-70b-versatile", 
-        messages: messages,
-        temperature: 0.6, // Suhu rendah agar jawaban lebih konsisten dan profesional
-        max_tokens: 4096, // Kapasitas jawaban panjang
-        top_p: 1,
-        stream: false
-      }),
-    });
-
-    const data = await response.json();
-
-    if (data.error) {
-      return res.status(500).json({ reply: `[SYSTEM ERROR]: ${data.error.message}` });
+    // Protokol Keamanan: Hanya POST yang diizinkan
+    if (req.method !== 'POST') {
+        return res.status(405).json({ error: 'Protokol Ditolak. Gunakan POST.' });
     }
 
-    // 3. Return balasan
-    res.status(200).json({ 
-      reply: data.choices[0].message.content,
-      usage: data.usage // Untuk monitoring performa
-    });
+    const { pesan, history = [] } = req.body;
 
-  } catch (error) {
-    console.error("Critical Error:", error);
-    res.status(500).json({ reply: "Neural Link terputus. Cek Server Vercel/Groq." });
-  }
+    // Validasi Input Dasar
+    if (!pesan) {
+        return res.status(400).json({ reply: "Sinyal kosong. Masukkan instruksi." });
+    }
+
+    try {
+        // Konstruksi Neural Message
+        // Menggabungkan System Prompt + History (Ingatan) + Pesan Baru
+        const messages = [
+            {
+                role: "system",
+                content: `PROTOKOL RHF-CORE AKTIF. 
+                Identitas: RHF-AI. 
+                Kreator: Radit Tiya. 
+                Karakter: Super logis, mewah, profesional, dan cerdas. 
+                Instruksi Memori: Ingat semua konteks dari awal. Gunakan format Markdown untuk teknis/koding. 
+                Gaya Bahasa: Elegan, dingin, namun memberikan solusi mendalam.`
+            },
+            // Masukkan sejarah percakapan (maksimal 10 terakhir agar tidak overload)
+            ...history.slice(-10).map(msg => ({
+                role: msg.role === 'user' ? 'user' : 'assistant',
+                content: msg.content || msg.text || ""
+            })),
+            { role: "user", content: pesan }
+        ];
+
+        // Eksekusi Koneksi ke Groq Cloud LPU
+        const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                // Llama 3.3 70B adalah model paling cerdas & stabil saat ini
+                model: "llama-3.3-70b-versatile",
+                messages: messages,
+                temperature: 0.6, // Keseimbangan antara kreativitas dan akurasi
+                max_tokens: 4096,
+                top_p: 1,
+                stream: false
+            }),
+        });
+
+        const data = await response.json();
+
+        // Handle Error dari API Groq (Misal: API Key Salah atau Kuota Habis)
+        if (data.error) {
+            console.error("Neural Error:", data.error);
+            return res.status(500).json({ 
+                reply: `[NEURAL ERROR]: ${data.error.message}. Cek konfigurasi API Key di Vercel.` 
+            });
+        }
+
+        // Kirim balasan sukses
+        res.status(200).json({ 
+            reply: data.choices[0].message.content 
+        });
+
+    } catch (error) {
+        // Handle Error Jaringan atau Server Crash
+        console.error("Critical System Failure:", error);
+        res.status(500).json({ 
+            reply: "FATAL ERROR: Koneksi Neural Engine terputus secara paksa." 
+        });
+    }
 }
-
-const messages = [
-  {
-    role: "system",
-    content: `PROTOKOL RHF-CORE AKTIF. 
-    Kamu memiliki ingatan jangka panjang dari awal percakapan. 
-    
-    ATURAN MEMORI:
-    1. Ingat identitas user dan poin-poin penting yang sudah dibahas di awal.
-    2. Jika suatu topik sudah tidak dibahas lagi (tergeser topik baru), kurangi prioritas ingatan tersebut.
-    3. Fokus pada benang merah percakapan saat ini.
-    4. Jika user bertanya tentang hal lama, gali kembali dari riwayat yang disediakan.
-    
-    Karakter: Profesional, Luxury, dan Cerdas.`
-  },
-  ...history,
-  { role: "user", content: pesan }
-];
