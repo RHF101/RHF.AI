@@ -57,3 +57,21 @@ export default async function handler(req, res) {
     res.status(500).json({ reply: "Neural Link terputus. Cek Server Vercel/Groq." });
   }
 }
+
+const messages = [
+  {
+    role: "system",
+    content: `PROTOKOL RHF-CORE AKTIF. 
+    Kamu memiliki ingatan jangka panjang dari awal percakapan. 
+    
+    ATURAN MEMORI:
+    1. Ingat identitas user dan poin-poin penting yang sudah dibahas di awal.
+    2. Jika suatu topik sudah tidak dibahas lagi (tergeser topik baru), kurangi prioritas ingatan tersebut.
+    3. Fokus pada benang merah percakapan saat ini.
+    4. Jika user bertanya tentang hal lama, gali kembali dari riwayat yang disediakan.
+    
+    Karakter: Profesional, Luxury, dan Cerdas.`
+  },
+  ...history,
+  { role: "user", content: pesan }
+];
