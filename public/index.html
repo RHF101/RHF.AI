@@ -3,120 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RHF-AI | Core System</title>
+    <title>RHF-AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { overflow: hidden; background: #020617; color: #f8fafc; font-family: 'Inter', sans-serif; }
-        .glass-panel { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.05); }
-        .chat-container::-webkit-scrollbar { width: 3px; }
-        .chat-container::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
-        .tool-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); }
-        .tool-card:hover { background: rgba(59, 130, 246, 0.05); border-color: rgba(59, 130, 246, 0.3); transform: translateY(-2px); }
-        .glow-btn { box-shadow: 0 0 20px rgba(59, 130, 246, 0.4); animation: pulse Glow 2s infinite; }
-        @keyframes pulseGlow { 0% { box-shadow: 0 0 5px rgba(59, 130, 246, 0.4); } 50% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.6); } 100% { box-shadow: 0 0 5px rgba(59, 130, 246, 0.4); } }
-        @media (max-width: 1024px) { #right-sidebar { display: none; } }
+        body { overflow: hidden; background: #ffffff; }
+        .chat-container::-webkit-scrollbar { width: 0px; }
+        .sidebar-transition { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .message-bubble { max-width: 85%; word-wrap: break-word; }
+        /* Animasi geser untuk mobile */
+        #sidebar.hidden-mobile { transform: translateX(-100%); }
     </style>
 </head>
-<body>
+<body class="text-slate-900 font-sans">
 
-    <div id="login-screen" class="fixed inset-0 bg-[#020617] z-[100] flex items-center justify-center p-8">
-        <div class="text-center w-full max-w-sm relative">
-            <div class="absolute -top-20 -left-20 w-40 h-40 bg-blue-600 blur-[100px] opacity-20"></div>
-            <img src="https://uptight-emerald-6gmwz673ag.edgeone.app/file_00000000aa9471fabbcb615488cb4b8a.png" class="w-24 h-24 mx-auto rounded-3xl shadow-2xl mb-6 relative z-10 border border-white/10">
-            <h1 class="text-4xl font-black tracking-tighter text-white mb-2">RHF-AI <span class="text-blue-500 underline decoration-double">CORE</span></h1>
-            <p class="text-slate-500 text-[10px] uppercase tracking-[0.4em] mb-12">Autonomous Neural Network</p>
-            <button onclick="loginGoogle()" class="w-full bg-white text-slate-900 font-black py-4 rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition-all shadow-xl">
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5">
-                AUTHENTICATE SYSTEM
+    <div id="login-screen" class="fixed inset-0 bg-white z-[100] flex items-center justify-center p-6">
+        <div class="text-center w-full max-w-xs">
+            <img src="https://uptight-emerald-6gmwz673ag.edgeone.app/file_00000000aa9471fabbcb615488cb4b8a.png" class="w-20 h-20 mx-auto rounded-2xl mb-6 shadow-lg">
+            <h1 class="text-2xl font-bold tracking-tighter mb-8">RHF-AI SYSTEM</h1>
+            <button onclick="loginGoogle()" class="w-full border-2 border-slate-100 py-3 rounded-xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-all">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5"> Login
             </button>
         </div>
     </div>
 
-    <div id="main-app" class="hidden h-screen flex overflow-hidden">
+    <div id="main-app" class="hidden flex h-screen overflow-hidden relative">
         
-        <div id="sidebar-left" class="fixed lg:relative w-72 h-full bg-[#020617] border-r border-white/5 z-50 transform -translate-x-full lg:translate-x-0 transition-transform duration-300">
-            <div class="p-6 flex flex-col h-full">
-                <div class="flex items-center gap-3 mb-10">
-                    <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center font-black text-xs">R</div>
-                    <span class="font-bold tracking-widest text-xs uppercase text-slate-400">Memory Banks</span>
+        <div id="sidebar" class="sidebar-transition fixed lg:relative w-72 h-full bg-slate-50 border-r border-slate-100 z-50 flex flex-col -translate-x-full lg:translate-x-0">
+            <div class="p-5 border-b border-slate-100 flex justify-between items-center">
+                <span class="font-bold text-sm tracking-widest text-blue-600">HISTORY</span>
+                <button onclick="toggleSidebar()" class="lg:hidden p-2 text-slate-400"><i class="fas fa-chevron-left"></i></button>
+            </div>
+            
+            <div id="chat-list" class="flex-1 overflow-y-auto p-4 space-y-2">
                 </div>
-                <button onclick="newChat()" class="w-full bg-blue-600 hover:bg-blue-700 py-3.5 rounded-xl mb-6 text-[10px] font-black tracking-widest uppercase active:scale-95 transition-all shadow-lg shadow-blue-900/20">
-                    + Initialise New Task
-                </button>
-                <div id="chat-list" class="flex-1 overflow-y-auto space-y-2 pr-2 custom-scroll text-slate-400"></div>
-                <div class="mt-auto pt-4 border-t border-white/5">
-                    <button onclick="logout()" class="text-red-500 text-[10px] font-bold uppercase tracking-widest"><i class="fas fa-power-off mr-2"></i> Shutdown</button>
-                </div>
+
+            <div class="p-5 border-t border-slate-100">
+                <button onclick="logout()" class="text-[10px] font-bold text-red-500 uppercase tracking-widest">Logout</button>
             </div>
         </div>
 
-        <div class="flex-1 flex flex-col bg-[#020617] relative">
-            <header class="h-16 border-b border-white/5 flex items-center justify-between px-6 glass-panel">
-                <button onclick="toggleLeftSidebar()" class="lg:hidden text-white"><i class="fas fa-bars"></i></button>
-                <div class="flex items-center gap-2">
-                    <div class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
-                    <span class="text-[9px] font-black tracking-[0.3em] text-blue-400 uppercase">System Ready</span>
-                </div>
-                <div class="text-[9px] font-mono text-slate-500" id="user-display"></div>
+        <div id="overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/20 z-40 hidden"></div>
+
+        <div class="flex-1 flex flex-col min-w-0 bg-white">
+            <header class="h-14 border-b border-slate-100 flex items-center px-4 justify-between">
+                <button onclick="toggleSidebar()" class="p-2 text-slate-600">
+                    <i class="fas fa-bars-staggered"></i>
+                </button>
+                <span class="text-[10px] font-black uppercase tracking-[0.2em]">RHF-AI Engine</span>
+                <button onclick="newChat()" class="text-blue-600 p-2"><i class="fas fa-plus"></i></button>
             </header>
 
-            <div id="chat-container" class="flex-1 overflow-y-auto p-6 lg:p-12 space-y-6 chat-container">
-                <div class="text-center py-24 opacity-5">
-                    <img src="https://uptight-emerald-6gmwz673ag.edgeone.app/file_00000000aa9471fabbcb615488cb4b8a.png" class="w-32 h-32 mx-auto grayscale">
+            <div id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-4 chat-container">
                 </div>
-            </div>
 
-            <div class="p-6 bg-gradient-to-t from-[#020617] to-transparent">
-                <div class="max-w-4xl mx-auto flex items-end gap-3">
-                    <div class="flex-1 bg-slate-900/80 border border-white/10 rounded-2xl p-2 flex items-end gap-2 focus-within:border-blue-500 transition-all shadow-2xl">
-                        <textarea id="user-input" rows="1" placeholder="Enter command to AI Core..." class="flex-1 bg-transparent border-none p-3 focus:ring-0 outline-none text-sm text-white resize-none"></textarea>
-                        <button onclick="sendMessage()" class="bg-blue-600 w-11 h-11 rounded-xl flex items-center justify-center hover:bg-blue-500 transition-all active:scale-90 shadow-lg shadow-blue-500/20">
-                            <i class="fas fa-arrow-up text-sm"></i>
-                        </button>
-                    </div>
+            <div class="p-4">
+                <div class="max-w-4xl mx-auto flex items-end gap-2 bg-slate-100 rounded-2xl p-2 border border-slate-200">
+                    <textarea id="user-input" rows="1" placeholder="Tanya sesuatu..." class="flex-1 bg-transparent border-none p-2 focus:ring-0 outline-none text-sm resize-none"></textarea>
                     
-                    <button onclick="alert('RHF-AI Image Engine: Menganalisa perintah visual...')" class="glow-btn bg-white text-black w-12 h-12 rounded-2xl flex items-center justify-center hover:bg-slate-200 transition-all active:scale-90 shrink-0">
-                        <i class="fas fa-wand-magic-sparkles"></i>
+                    <button onclick="generateImage()" class="w-10 h-10 rounded-xl bg-white text-blue-600 flex items-center justify-center shadow-sm active:scale-90">
+                        <i class="fas fa-image"></i>
                     </button>
-                </div>
-            </div>
-        </div>
-
-        <div id="right-sidebar" class="w-80 bg-[#020617] border-l border-white/5 p-6 flex flex-col gap-6">
-            <h3 class="text-[9px] font-black tracking-[0.4em] text-slate-500 uppercase mb-2">Neural Extension</h3>
-            
-            <div class="space-y-4">
-                <div class="tool-card p-5 rounded-2xl cursor-pointer" onclick="window.open('https://www.canva.com', '_blank')">
-                    <i class="fas fa-layer-group text-blue-500 mb-4 text-xl"></i>
-                    <h4 class="text-xs font-bold uppercase tracking-widest text-white">Visual Interface</h4>
-                    <p class="text-[9px] text-slate-500 mt-2 leading-relaxed italic text-blue-400/60">"Sync to RHF Design Engine for high-end rendering."</p>
-                </div>
-
-                <div class="tool-card p-5 rounded-2xl cursor-pointer">
-                    <i class="fas fa-fingerprint text-purple-500 mb-4 text-xl"></i>
-                    <h4 class="text-xs font-bold uppercase tracking-widest text-white">Brand Identity</h4>
-                    <p class="text-[9px] text-slate-500 mt-2 leading-relaxed">Ekstrak logo & identitas visual otomatis.</p>
-                </div>
-
-                <div class="tool-card p-5 rounded-2xl cursor-pointer">
-                    <i class="fas fa-microchip text-emerald-500 mb-4 text-xl"></i>
-                    <h4 class="text-xs font-bold uppercase tracking-widest text-white">Logic Processing</h4>
-                    <p class="text-[9px] text-slate-500 mt-2 leading-relaxed">Mode berpikir tingkat tinggi diaktifkan.</p>
-                </div>
-            </div>
-
-            <div class="mt-auto p-4 bg-blue-600/5 border border-blue-500/20 rounded-2xl">
-                <div class="flex justify-between items-center mb-2">
-                    <p class="text-[8px] text-blue-400 font-black uppercase tracking-widest">Neural Key</p>
-                    <div class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-ping"></div>
-                </div>
-                <p class="text-[7px] font-mono text-slate-500 truncate mb-1">KID: a418dc7d-ecc5...be</p>
-                <div class="w-full bg-slate-800 h-1 rounded-full overflow-hidden">
-                    <div class="bg-blue-500 h-full w-[95%]"></div>
+                    
+                    <button onclick="sendMessage()" class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center active:scale-90">
+                        <i class="fas fa-paper-plane text-xs"></i>
+                    </button>
                 </div>
             </div>
         </div>
@@ -147,21 +101,36 @@
             if (user) {
                 document.getElementById('login-screen').classList.add('hidden');
                 document.getElementById('main-app').classList.remove('hidden');
-                document.getElementById('user-display').innerText = user.email.split('@')[0].toUpperCase();
                 loadChatList();
             } else {
                 document.getElementById('login-screen').classList.remove('hidden');
-                document.getElementById('main-app').classList.add('hidden');
             }
         });
 
         function logout() { auth.signOut().then(() => location.reload()); }
-        function toggleLeftSidebar() { document.getElementById('sidebar-left').classList.toggle('-translate-x-full'); }
+
+        // FUNGSI GANTI/HILANGKAN SIDEBAR
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            const isOpen = sidebar.classList.contains('translate-x-0');
+
+            if (isOpen) {
+                sidebar.classList.remove('translate-x-0');
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+            } else {
+                sidebar.classList.remove('-translate-x-full');
+                sidebar.classList.add('translate-x-0');
+                overlay.classList.remove('hidden');
+            }
+        }
 
         function newChat() {
-            currentChatId = null; historyChat = [];
-            document.getElementById('chat-container').innerHTML = `<div class="text-center py-20 text-[9px] tracking-[0.5em] text-blue-500/30 uppercase">Neural Session Initialised</div>`;
-            if(window.innerWidth < 1024) toggleLeftSidebar();
+            currentChatId = null;
+            historyChat = [];
+            document.getElementById('chat-container').innerHTML = '';
+            if(window.innerWidth < 1024) toggleSidebar();
         }
 
         async function sendMessage() {
@@ -181,18 +150,28 @@
                 const data = await res.json();
                 appendMessage('ai', data.reply);
                 saveToFirestore(pesan, data.reply);
-            } catch (e) { appendMessage('ai', "SYSTEM FAILURE: Connection Lost."); }
+            } catch (e) { appendMessage('ai', "Error: System Offline."); }
+        }
+
+        function generateImage() {
+            const prompt = document.getElementById('user-input').value;
+            if(!prompt) {
+                alert("Ketik deskripsi gambar dulu di kotak pesan!");
+                return;
+            }
+            appendMessage('ai', "Sedang memproses visualisasi untuk: " + prompt + "...");
+            // Di sini nanti kita hubungkan ke API Image
         }
 
         function appendMessage(sender, text) {
             const container = document.getElementById('chat-container');
             const wrapper = document.createElement('div');
             wrapper.className = sender === 'user' ? "flex justify-end" : "flex justify-start";
+            
             const bubble = document.createElement('div');
-            bubble.className = sender === 'user' 
-                ? "bg-blue-600 text-white px-5 py-3 rounded-2xl rounded-tr-none max-w-[85%] text-[13px] font-medium shadow-2xl"
-                : "bg-slate-900 text-slate-300 border border-white/5 px-5 py-3 rounded-2xl rounded-tl-none max-w-[85%] text-[13px] leading-relaxed";
+            bubble.className = `message-bubble p-3 rounded-2xl text-sm ${sender === 'user' ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-slate-100 text-slate-800 rounded-tl-none'}`;
             bubble.innerText = text;
+            
             wrapper.appendChild(bubble);
             container.appendChild(wrapper);
             container.scrollTop = container.scrollHeight;
@@ -210,14 +189,16 @@
 
         async function loadChatList() {
             const list = document.getElementById('chat-list');
-            const uid = auth.currentUser.uid;
-            const snapshot = await db.collection('chats').doc(uid).collection('sessions').orderBy('lastUpdated', 'desc').limit(15).get();
+            const snapshot = await db.collection('chats').doc(auth.currentUser.uid).collection('sessions').orderBy('lastUpdated', 'desc').limit(15).get();
             list.innerHTML = '';
             snapshot.forEach(doc => {
                 const btn = document.createElement('button');
-                btn.className = "w-full text-left p-3.5 hover:bg-white/5 rounded-xl text-[10px] truncate text-slate-500 hover:text-blue-400 border border-transparent mb-1 transition-all";
-                btn.innerHTML = `<i class="far fa-dot-circle mr-3 opacity-30"></i> ${doc.data().title}`;
-                btn.onclick = () => loadMessages(doc.id);
+                btn.className = "w-full text-left p-3 hover:bg-white rounded-xl text-[11px] truncate text-slate-400 border border-transparent transition-all";
+                btn.innerText = doc.data().title;
+                btn.onclick = () => {
+                    loadMessages(doc.id);
+                    toggleSidebar(); // Otomatis tutup sidebar setelah pilih chat
+                };
                 list.appendChild(btn);
             });
         }
