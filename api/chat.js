@@ -1,24 +1,29 @@
 export default async function handler(req, res) {
-  // Header Keamanan & Akses
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Gunakan POST' });
+  
+  // Pastikan request adalah POST
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Gunakan POST' });
+  }
 
   const { pesan, isImage, history } = req.body;
-  const API_KEY = process.env.GROQ_API_KEY;
 
   try {
-    // 1. GENERATE GAMBAR (Kualitas Tinggi)
-    if (isImage) {
+    // --- JALUR 1: GENERATE GAMBAR (Tetap Pakai Yang Kamu Suka) ---
+    if (isImage === true) {
       const seed = Math.floor(Math.random() * 1000000);
-      const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(pesan)}?width=1024&height=1024&nologo=true&seed=${seed}&model=flux`;
+      // Tetap pakai Pollinations karena kamu suka hasilnya
+      const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(pesan)}?width=1024&height=1024&nologo=true&seed=${seed}`;
       return res.status(200).json({ type: "image", reply: imageUrl });
     }
 
-    // 2. KECERDASAN NGOBROL & CODING (Llama 3 70B)
+    // --- JALUR 2: OTAK CHAT (Ganti Model ke yang Lebih Cepat/Stabil) ---
+    const API_KEY = process.env.GROQ_API_KEY;
+    
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -26,33 +31,36 @@ export default async function handler(req, res) {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "llama3-70b-8192", // Model paling cerdas untuk coding
+        model: "llama-3.3-70b-versatile", // Kita ganti ke model yang lebih stabil 'versatile'
         messages: [
-          { 
-            role: "system", 
-            content: "Kamu adalah RHF-AI Omni-Core v3.0, AI Super Genius ciptaan Radit Tiya. Kamu ahli dalam Smali, Web Engineering, Android Modding, dan Fintech. Berikan jawaban yang sangat teknis, detail, dan solutif." 
-          },
+          { role: "system", content: "Kamu adalah RHF-AI. Jawab dengan singkat, padat, dan teknis." },
           ...(history || []),
           { role: "user", content: pesan }
         ],
-        temperature: 0.6, // Biar lebih kreatif tapi tetap akurat
-        max_tokens: 4096
+        temperature: 0.7
       })
     });
 
     const data = await response.json();
-    
+
     if (data.choices && data.choices[0]) {
       return res.status(200).json({ 
         type: "text", 
         reply: data.choices[0].message.content 
       });
     } else {
-      throw new Error("Gagal mengambil respon AI");
+      // Jika Groq gagal, kita beri respon darurat agar web tidak "SYSTEM ERROR"
+      return res.status(200).json({ 
+        type: "text", 
+        reply: "Maaf Dit, koneksi ke Groq lagi padat. Coba chat lagi sedetik lagi." 
+      });
     }
 
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: "Neural Link Overload" });
+    // Jika semua gagal, kirim JSON yang valid, jangan lempar Error 500
+    return res.status(200).json({ 
+      type: "text", 
+      reply: "Sistem sedang restart jalur neural. Coba kirim ulang pesannya." 
+    });
   }
 }
