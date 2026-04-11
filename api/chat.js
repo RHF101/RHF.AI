@@ -1,5 +1,4 @@
 export default async function handler(req, res) {
-  // --- KONFIGURASI HEADER ---
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -10,17 +9,14 @@ export default async function handler(req, res) {
     const { pesan, isImage, history } = req.body;
     const apiKey = process.env.GEMINI_API_KEY;
 
-    // --- GERBANG 1: JALUR VISUAL (HANYA AKTIF JIKA isImage TRUE) ---
+    // --- JALUR VISUAL (TETAP AMAN) ---
     if (isImage === true || isImage === "true") {
       const seed = Math.floor(Math.random() * 1000000000);
       const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(pesan)}?width=1024&height=1024&nologo=true&seed=${seed}&model=flux`;
-      
-      // Response berhenti di sini, tidak akan lanjut ke bawah
       return res.status(200).json({ type: "image", reply: imageUrl });
     }
 
-    // --- GERBANG 2: JALUR OTAK (HANYA AKTIF JIKA BUKAN GAMBAR) ---
-    // Filter history supaya link gambar tidak mengacaukan logika chat
+    // --- JALUR OTAK (SINKRONISASI ULANG) ---
     const cleanHistory = (history || [])
       .filter(item => item.content && typeof item.content === 'string' && !item.content.includes('pollinations.ai'))
       .map(item => ({
@@ -29,17 +25,17 @@ export default async function handler(req, res) {
       }))
       .slice(-6);
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`, {
+    // KUNCI PERBAIKAN: Pakai gemini-1.5-flash-001 (Versi Fix)
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         contents: [
-          { role: "user", parts: [{ text: "Kamu adalah RHF-AI Omni-Core v3.0, AI asisten teknis ciptaan Radit Tiya. Kamu ahli dalam coding dan modding Android. Selalu panggil user dengan sebutan Radit." }] },
-          { role: "model", parts: [{ text: "Omni-Core v3.0 Sinkron. Siap menerima perintah, Radit." }] },
+          { role: "user", parts: [{ text: "Kamu adalah RHF-AI Omni-Core v3.0, asisten teknis cerdas ciptaan Radit Tiya. Jawab dengan teliti." }] },
+          { role: "model", parts: [{ text: "Sistem Aktif, Radit." }] },
           ...cleanHistory,
           { role: "user", parts: [{ text: pesan }] }
-        ],
-        generationConfig: { temperature: 0.8, maxOutputTokens: 2048 }
+        ]
       })
     });
 
@@ -48,12 +44,17 @@ export default async function handler(req, res) {
     if (data.candidates && data.candidates[0].content) {
       const text = data.candidates[0].content.parts[0].text;
       return res.status(200).json({ type: "text", reply: text });
+    } else if (data.error) {
+      // Kita pancing biar dia kasih tau daftar model kalau error lagi
+      return res.status(200).json({ 
+        type: "text", 
+        reply: `SYSTEM ERROR [${data.error.status}]: ${data.error.message}. Dit, coba ganti API Key baru di Google AI Studio!` 
+      });
     } else {
-      return res.status(200).json({ type: "text", reply: "Neural Link sedang sibuk, Radit. Coba lagi!" });
+      return res.status(200).json({ type: "text", reply: "Neural Link Limit tercapai, Dit!" });
     }
 
   } catch (err) {
-    // Catch-all jika ada masalah Node.js
-    return res.status(200).json({ type: "text", reply: "SYSTEM CRASH: Cek logs Vercel atau versi Node.js kamu." });
+    return res.status(200).json({ type: "text", reply: "Sistem Offline total." });
   }
 }
