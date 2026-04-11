@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>RHF-AI | Official</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
@@ -10,14 +10,17 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
+        body { overflow-x: hidden; }
         .chat-container::-webkit-scrollbar { width: 3px; }
         .chat-container::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
-        .glass-effect { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); }
+        .glass-effect { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); }
+        /* Perbaikan untuk tampilan Mobile agar tidak ketutup keyboard */
+        .main-content { height: 100dvh; } 
     </style>
 </head>
 <body class="bg-[#f8fafc] font-sans text-slate-900">
 
-    <div id="login-screen" class="fixed inset-0 bg-white z-50 flex items-center justify-center p-8">
+    <div id="login-screen" class="fixed inset-0 bg-white z-[100] flex items-center justify-center p-8">
         <div class="text-center w-full max-w-sm">
             <div class="mb-10">
                 <img src="https://uptight-emerald-6gmwz673ag.edgeone.app/file_00000000aa9471fabbcb615488cb4b8a.png" 
@@ -25,7 +28,6 @@
                 <h1 class="text-3xl font-extrabold tracking-tighter text-slate-800">RHF-AI</h1>
                 <p class="text-slate-400 mt-2 text-sm">Next Generation Artificial Intelligence</p>
             </div>
-
             <button onclick="loginGoogle()" class="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 py-3.5 px-4 rounded-2xl hover:bg-slate-50 transition-all shadow-sm active:scale-95">
                 <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5" alt="Google">
                 <span class="font-semibold text-slate-600">Masuk dengan Google</span>
@@ -33,58 +35,59 @@
         </div>
     </div>
 
-    <div id="main-app" class="hidden flex h-screen overflow-hidden">
+    <div id="main-app" class="hidden flex h-screen main-content overflow-hidden">
         
-        <div id="sidebar" class="fixed lg:relative inset-y-0 left-0 w-72 bg-[#0f172a] text-white z-40 transform -translate-x-full lg:translate-x-0 transition-transform duration-300">
+        <div id="sidebar" class="fixed lg:relative inset-y-0 left-0 w-72 bg-[#0f172a] text-white z-50 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out shadow-2xl lg:shadow-none">
             <div class="p-6 h-full flex flex-col">
                 <div class="flex items-center justify-between mb-8">
                     <span class="font-bold text-xl tracking-widest text-blue-400">RHF SYSTEM</span>
-                    <button onclick="toggleSidebar()" class="lg:hidden text-slate-400"><i class="fas fa-times"></i></button>
+                    <button onclick="toggleSidebar()" class="lg:hidden text-slate-400 p-2"><i class="fas fa-times"></i></button>
                 </div>
                 
-                <button onclick="newChat()" class="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded-xl font-medium mb-6 transition-all shadow-lg shadow-blue-900/20">
+                <button onclick="newChat()" class="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded-xl font-medium mb-6 transition-all shadow-lg active:scale-95">
                     <i class="fas fa-plus-circle mr-2"></i> Chat Baru
                 </button>
 
-                <div id="chat-list" class="flex-1 overflow-y-auto space-y-1 pr-2">
+                <div id="chat-list" class="flex-1 overflow-y-auto space-y-2 pr-2 custom-scroll">
                     </div>
 
                 <div class="pt-6 border-t border-slate-800 mt-auto">
-                    <div class="flex items-center gap-3 mb-4 p-2">
-                        <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs" id="user-initial">R</div>
-                        <p id="user-info" class="text-xs truncate text-slate-400"></p>
+                    <div class="flex items-center gap-3 mb-4 p-2 bg-slate-800/50 rounded-lg">
+                        <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-xs font-bold" id="user-initial">R</div>
+                        <p id="user-info" class="text-[10px] truncate text-slate-300 flex-1"></p>
                     </div>
-                    <button onclick="logout()" class="w-full text-left text-sm text-red-400 hover:text-red-300 transition-colors">
+                    <button onclick="logout()" class="w-full text-left text-sm text-red-400 hover:text-red-300 transition-colors p-2">
                         <i class="fas fa-power-off mr-2"></i> Logout
                     </button>
                 </div>
             </div>
         </div>
 
-        <div class="flex-1 flex flex-col relative bg-white">
-            <header class="h-16 flex items-center px-6 justify-between border-b border-slate-100 glass-effect sticky top-0 z-10">
-                <button onclick="toggleSidebar()" class="p-2 -ml-2 text-slate-500 hover:bg-slate-50 rounded-xl">
-                    <i class="fas fa-align-left text-lg"></i>
+        <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/50 z-40 hidden lg:hidden"></div>
+
+        <div class="flex-1 flex flex-col relative bg-white w-full min-w-0">
+            <header class="h-16 flex items-center px-4 lg:px-6 justify-between border-b border-slate-100 glass-effect sticky top-0 z-30">
+                <button onclick="toggleSidebar()" class="p-2 text-slate-500 hover:bg-slate-50 rounded-xl">
+                    <i class="fas fa-bars text-lg"></i>
                 </button>
                 <div class="flex items-center gap-2">
                     <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                    <span class="text-sm font-bold text-slate-700 uppercase tracking-widest">RHF-AI Online</span>
+                    <span class="text-[10px] lg:text-sm font-bold text-slate-700 uppercase tracking-widest">RHF-AI Online</span>
                 </div>
-                <div class="w-8"></div>
-            </header>
+                <div class="w-10"></div> </header>
 
-            <div id="chat-container" class="flex-1 overflow-y-auto p-4 lg:p-10 space-y-8 chat-container">
+            <div id="chat-container" class="flex-1 overflow-y-auto p-4 lg:p-10 space-y-6 chat-container">
                 <div class="text-center py-10">
-                    <img src="https://uptight-emerald-6gmwz673ag.edgeone.app/file_00000000aa9471fabbcb615488cb4b8a.png" class="w-12 h-12 mx-auto opacity-20 grayscale mb-3">
-                    <p class="text-slate-300 text-xs font-medium uppercase tracking-[0.2em]">Enkripsi Firestore Aktif</p>
+                    <img src="https://uptight-emerald-6gmwz673ag.edgeone.app/file_00000000aa9471fabbcb615488cb4b8a.png" class="w-12 h-12 mx-auto opacity-10 grayscale mb-3">
+                    <p class="text-slate-300 text-[10px] font-medium uppercase tracking-[0.2em]">Sistem Siap, Admin Radit</p>
                 </div>
             </div>
 
-            <div class="p-4 lg:p-6 bg-white">
-                <div class="max-w-4xl mx-auto flex items-end gap-3 bg-slate-50 rounded-2xl p-2 border border-slate-200 focus-within:border-blue-400 transition-all shadow-sm">
+            <div class="p-4 bg-white border-t border-slate-50">
+                <div class="max-w-4xl mx-auto flex items-end gap-2 bg-slate-50 rounded-2xl p-2 border border-slate-200 focus-within:border-blue-400 transition-all shadow-sm">
                     <textarea id="user-input" rows="1" placeholder="Ketik pesan..." 
-                              class="flex-1 bg-transparent border-none px-3 py-2 focus:ring-0 outline-none text-slate-700 resize-none max-h-32"></textarea>
-                    <button onclick="sendMessage()" class="bg-blue-600 text-white w-10 h-10 rounded-xl flex items-center justify-center hover:bg-blue-700 transition-all shadow-lg shadow-blue-200">
+                              class="flex-1 bg-transparent border-none px-3 py-2 focus:ring-0 outline-none text-slate-700 resize-none max-h-32 text-sm"></textarea>
+                    <button onclick="sendMessage()" class="bg-blue-600 text-white w-10 h-10 rounded-xl flex items-center justify-center hover:bg-blue-700 transition-all shadow-md active:scale-90">
                         <i class="fas fa-arrow-up"></i>
                     </button>
                 </div>
@@ -93,7 +96,6 @@
     </div>
 
     <script>
-        // FIREBASE CONFIG MILIK RADIT
         const firebaseConfig = {
             apiKey: "AIzaSyDNFXLa8WGAqhLnc8RrLLTgP3nLWvXkd1w",
             authDomain: "rhf-confrims.firebaseapp.com",
@@ -130,24 +132,26 @@
             }
         });
 
-        function logout() {
-            auth.signOut().then(() => location.reload());
-        }
+        function logout() { auth.signOut().then(() => location.reload()); }
 
         function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('-translate-x-full');
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            const isHidden = sidebar.classList.contains('-translate-x-full');
+            
+            if (isHidden) {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+            }
         }
 
-        // --- MODIFIKASI NEW CHAT ---
         function newChat() {
-            currentChatId = null; // Menghapus ID agar pesan berikutnya dianggap sesi baru
+            currentChatId = null;
             historyChat = [];
-            document.getElementById('chat-container').innerHTML = `
-                <div class="text-center py-10">
-                    <img src="https://uptight-emerald-6gmwz673ag.edgeone.app/file_00000000aa9471fabbcb615488cb4b8a.png" class="w-12 h-12 mx-auto opacity-20 grayscale mb-3">
-                    <p class="text-slate-300 text-xs font-medium uppercase tracking-[0.2em]">Sesi Baru Dimulai</p>
-                </div>
-            `;
+            document.getElementById('chat-container').innerHTML = `<div class="text-center py-10 opacity-20"><p class="text-[10px] tracking-widest">SESI BARU</p></div>`;
             if(window.innerWidth < 1024) toggleSidebar();
         }
 
@@ -175,41 +179,35 @@
                 appendMessage('ai', data.reply);
                 saveToFirestore(pesan, data.reply);
             } catch (error) {
-                appendMessage('ai', "Koneksi terputus. Cek internet kamu.");
+                appendMessage('ai', "Error: Cek koneksi.");
             }
         }
 
         function appendMessage(sender, text) {
             const container = document.getElementById('chat-container');
             const wrapper = document.createElement('div');
-            wrapper.className = sender === 'user' ? "flex justify-end" : "flex justify-start";
+            wrapper.className = sender === 'user' ? "flex justify-end w-full" : "flex justify-start w-full";
 
             const bubble = document.createElement('div');
             bubble.className = sender === 'user' 
-                ? "bg-[#e2e8f0] text-slate-800 px-5 py-3 rounded-2xl rounded-tr-none max-w-[85%] shadow-sm text-sm"
-                : "bg-white text-slate-700 border border-slate-100 px-5 py-3 rounded-2xl rounded-tl-none max-w-[85%] shadow-md text-sm leading-relaxed";
+                ? "bg-blue-50 text-slate-700 px-4 py-2.5 rounded-2xl rounded-tr-none max-w-[85%] shadow-sm text-sm border border-blue-100"
+                : "bg-white text-slate-700 border border-slate-100 px-4 py-2.5 rounded-2xl rounded-tl-none max-w-[85%] shadow-md text-sm leading-relaxed";
             
             bubble.innerText = text;
             wrapper.appendChild(bubble);
             container.appendChild(wrapper);
             container.scrollTop = container.scrollHeight;
-            
             historyChat.push({ role: sender === 'user' ? 'user' : 'assistant', content: text });
         }
 
-        // --- MODIFIKASI SAVE TO FIRESTORE ---
         async function saveToFirestore(uPesan, aPesan) {
-            // Jika ID kosong, buat ID baru berdasarkan waktu saat ini
-            if (!currentChatId) {
-                currentChatId = "session_" + Date.now();
-            }
-            
+            if (!currentChatId) currentChatId = "session_" + Date.now();
             const uid = auth.currentUser.uid;
             const docRef = db.collection('chats').doc(uid).collection('sessions').doc(currentChatId);
             
             await docRef.set({
                 lastUpdated: firebase.firestore.FieldValue.serverTimestamp(),
-                title: uPesan.substring(0, 30) // Menggunakan potongan pesan sebagai judul di sidebar
+                title: uPesan.substring(0, 25)
             }, { merge: true });
 
             await docRef.collection('messages').add({
@@ -217,19 +215,20 @@
                 ai: aPesan,
                 time: firebase.firestore.FieldValue.serverTimestamp()
             });
-            loadChatList(); // Memperbarui daftar di sidebar agar sesi baru muncul
+            loadChatList();
         }
 
         async function loadChatList() {
             const list = document.getElementById('chat-list');
             const uid = auth.currentUser.uid;
-            const snapshot = await db.collection('chats').doc(uid).collection('sessions').orderBy('lastUpdated', 'desc').limit(10).get();
+            // Menambah limit jadi 20 agar lebih banyak yang terlihat
+            const snapshot = await db.collection('chats').doc(uid).collection('sessions').orderBy('lastUpdated', 'desc').limit(20).get();
             
             list.innerHTML = '';
             snapshot.forEach(doc => {
                 const btn = document.createElement('button');
-                btn.className = "w-full text-left p-3 hover:bg-slate-800 rounded-xl transition-all text-xs truncate text-slate-400 hover:text-white mb-1";
-                btn.innerHTML = `<i class="far fa-comment mr-2 opacity-50"></i> ${doc.data().title}`;
+                btn.className = "w-full text-left p-3 hover:bg-slate-800 rounded-xl transition-all text-[11px] truncate text-slate-400 hover:text-white border border-transparent hover:border-slate-700 mb-1";
+                btn.innerHTML = `<i class="far fa-comment-dots mr-2 opacity-50"></i> ${doc.data().title || 'Chat'}`;
                 btn.onclick = () => loadMessages(doc.id);
                 list.appendChild(btn);
             });
