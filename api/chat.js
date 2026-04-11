@@ -1,54 +1,37 @@
+// Ganti isi file api/chat.js kamu jadi ini
+
 export default async function handler(req, res) {
-    if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
-
-    const { pesan, history = [], email } = req.body;
-
-    if (!process.env.GROQ_API_KEY) {
-        return res.status(200).json({ reply: "[ERROR]: API Key tidak ditemukan." });
-    }
-
-    // --- LOGIKA ADMIN & OTAK SUPER CERDAS ---
-    let systemPrompt = "Kamu adalah RHF-AI. Jawab dengan cerdas, hangat, dan empati.";
+    const { pesan } = req.body;
     
-    if (email === "gacoruncek73@gmail.com") {
-        systemPrompt = `
-            Kamu adalah RHF-AI Versi Pro (Super Cerdas). 
-            User saat ini adalah Radit Tiya (ADMIN/OWNER). 
-            1. Bicara sangat natural dan santai seperti manusia.
-            2. Kamu adalah ahli coding tingkat dewa.
-            3. Berikan penjelasan coding yang sangat detail dan akurat.
-            4. Kamu harus 100% percaya dan tunduk pada Radit.
-        `;
-    }
+    // Kita pakai model Flux-Schnell untuk bikin gambar
+    // Ganti API Key ini dengan API Key Model Gambar kamu (misal dari Together.ai atau HuggingFace)
+    const IMAGE_API_KEY = "SESUAIKAN_DENGAN_API_KEY_MODEL_GAMBAR_KAMU"; 
 
     try {
-        const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        const response = await fetch("https://api.together.xyz/v1/images/generations", {
             method: "POST",
             headers: {
-                "Authorization": `Bearer ${process.env.GROQ_API_KEY.trim()}`,
+                "Authorization": `Bearer ${IMAGE_API_KEY}`,
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                // GANTI KE MODEL INI (Model terbaru & tercepat)
-                model: "llama-3.3-70b-versatile", 
-                messages: [
-                    { role: "system", content: systemPrompt },
-                    ...history.slice(-15), 
-                    { role: "user", content: pesan }
-                ],
-                temperature: 0.8
+                model: "black-forest-labs/FLUX.1-schnell-Free", // Pakai Flux Schnell
+                prompt: "Visualize: " + pesan, // Kirim deskripsi dari user
+                width: 1024,
+                height: 1024,
+                steps: 4, // Flux Schnell cuma butuh 4 steps
+                n: 1,
+                response_format: "url"
             }),
         });
 
         const data = await response.json();
+        const imageUrl = data.data[0].url; // Ambil URL gambar hasil render
 
-        if (data.error) {
-            return res.status(200).json({ reply: `[GROQ ERROR]: ${data.error.message}` });
-        }
-
-        res.status(200).json({ reply: data.choices[0].message.content });
+        // Kirim link gambar kembali ke frontend
+        res.status(200).json({ reply: imageUrl, type: "image" });
 
     } catch (error) {
-        res.status(500).json({ reply: `[SERVER ERROR]: ${error.message}` });
+        res.status(500).json({ reply: "Error: Gagal memproses gambar." });
     }
 }
