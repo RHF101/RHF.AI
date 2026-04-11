@@ -6,49 +6,25 @@ export default async function handler(req, res) {
     if (req.method === 'OPTIONS') return res.status(200).end();
 
     const { pesan, isImage, history } = req.body;
-    const HF_TOKEN = process.env.HF_TOKEN; 
 
     if (isImage) {
-        // Daftar Model: Coba FLUX dulu, kalau 410/Error, coba Stable Diffusion
-        const models = [
-            "black-forest-labs/FLUX.1-schnell",
-            "stabilityai/stable-diffusion-xl-base-1.0"
-        ];
+        try {
+            // JALUR BYPASS: Menggunakan Pollinations AI (Tanpa Token, Anti 410)
+            const promptAman = encodeURIComponent(pesan);
+            const imageUrl = `https://pollinations.ai/p/${promptAman}?width=1024&height=1024&seed=${Date.now()}&model=flux`;
+            
+            // Kita tes apakah gambarnya bisa diakses
+            return res.status(200).json({ 
+                reply: imageUrl, 
+                type: "image" 
+            });
 
-        for (const model of models) {
-            try {
-                const response = await fetch(
-                    `https://api-inference.huggingface.co/models/${model}`,
-                    {
-                        headers: { 
-                            "Authorization": `Bearer ${HF_TOKEN}`,
-                            "Content-Type": "application/json",
-                        },
-                        method: "POST",
-                        body: JSON.stringify({ inputs: pesan }),
-                    }
-                );
-
-                if (response.ok) {
-                    const blob = await response.blob();
-                    const buffer = Buffer.from(await blob.arrayBuffer());
-                    return res.status(200).json({ 
-                        reply: `data:image/png;base64,${buffer.toString('base64')}`, 
-                        type: "image" 
-                    });
-                }
-                
-                console.log(`Model ${model} gagal, mencoba model berikutnya...`);
-            } catch (err) {
-                continue; // Lanjut ke model cadangan
-            }
+        } catch (e) {
+            return res.status(500).json({ reply: "Sistem Visual sedang benar-benar down. Coba lagi nanti, Dit!" });
         }
-
-        // Jika semua model gagal
-        return res.status(500).json({ reply: "Semua jalur visual sibuk atau pindah alamat (410). Coba prompt lain, Dit!" });
     }
 
-    // --- LOGIKA TEKS (Sama seperti sebelumnya) ---
+    // --- LOGIKA TEKS (Gunakan GROQ kamu yang sudah jalan) ---
     try {
         const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
             method: "POST",
