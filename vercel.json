@@ -1,6 +1,18 @@
 {
   "version": 2,
   "rewrites": [
-    { "source": "/api/chat", "destination": "/api/chat.js" }
+    {
+      "source": "/api/chat",
+      "destination": "/api/chat.js"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET,POST,OPTIONS" }
+      ]
+    }
   ]
 }
