@@ -21,7 +21,7 @@
         .message-in { animation: fadeInUp 0.4s ease forwards; }
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
         #overlay { background: rgba(0,0,0,0.7); display: none; position: fixed; inset: 0; z-index: 90; }
-        .code-font { font-family: 'JetBrains Mono', monospace; }
+        .code-font { font-family: 'JetBrains Mono', monospace; font-size: 12px; background: #111; padding: 10px; border-radius: 8px; border: 1px solid #333; margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -99,7 +99,9 @@
                 loadChatList();
             }
         });
+
         function logout() { auth.signOut().then(() => location.reload()); }
+
         function toggleSidebar() {
             const sb = document.getElementById('sidebar');
             const ov = document.getElementById('overlay');
@@ -117,27 +119,30 @@
             input.style.height = 'auto';
 
             try {
-                // JALUR FETCH FINAL: Memastikan memanggil folder /api/
                 const response = await fetch("/api/chat", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ 
-                  pesan: inputUser, 
-                  isImage: modeGambar, 
-                  history: historyChat 
-               })
-            });
+                        pesan: pesan, 
+                        isImage: isImage, 
+                        history: historyChat 
+                    })
+                });
 
-                if (!response.ok) throw new Error("API_ERROR");
+                if (!response.ok) throw new Error("API_OFFLINE");
 
                 const data = await response.json();
+                
                 if (data.type === "image") {
                     appendImage(data.reply);
+                    saveToFirestore(pesan, data.reply);
                 } else {
                     typeWriter(data.reply);
+                    saveToFirestore(pesan, data.reply);
                 }
-                saveToFirestore(pesan, data.reply);
+
             } catch (err) {
+                console.error(err);
                 appendMessage('ai', "SYSTEM ERROR: Hubungan dengan Omni-Core terputus. Pastikan API Key di Vercel Settings sudah benar.");
             }
         }
@@ -150,6 +155,7 @@
             inner.className = sender === 'user' 
                 ? "bg-blue-600 text-white px-5 py-3 rounded-2xl rounded-tr-none text-[13px] max-w-[85%] shadow-xl" 
                 : "bg-[#0a0a0a] border border-white/10 text-slate-300 px-5 py-4 rounded-2xl rounded-tl-none text-[13px] max-w-[90%] whitespace-pre-wrap leading-relaxed";
+            
             inner.innerText = text;
             wrap.appendChild(inner);
             container.appendChild(wrap);
@@ -163,17 +169,21 @@
             wrap.className = "flex justify-start message-in mb-4";
             const inner = document.createElement('div');
             inner.className = "bg-[#0a0a0a] border border-white/10 text-slate-300 px-5 py-4 rounded-2xl rounded-tl-none text-[13px] max-w-[90%] whitespace-pre-wrap leading-relaxed";
+            
+            // Cek jika mengandung code block
             if (text.includes('```')) inner.classList.add('code-font');
+            
             wrap.appendChild(inner);
             container.appendChild(wrap);
 
             let i = 0;
+            inner.innerText = "";
             function typing() {
                 if (i < text.length) {
                     inner.innerText += text.charAt(i);
                     i++;
                     container.scrollTop = container.scrollHeight;
-                    setTimeout(typing, 5);
+                    setTimeout(typing, 2); // Dipercepat biar gak nunggu lama
                 }
             }
             typing();
@@ -192,6 +202,7 @@
         }
 
         async function saveToFirestore(u, a) {
+            if (!auth.currentUser) return;
             const uid = auth.currentUser.uid;
             if (!currentChatId) {
                 currentChatId = "session_" + Date.now();
@@ -210,6 +221,7 @@
         }
 
         async function loadChatList() {
+            if (!auth.currentUser) return;
             const list = document.getElementById('chat-list');
             const snapshot = await db.collection('chats').doc(auth.currentUser.uid).collection('sessions').orderBy('lastUpdated', 'desc').get();
             list.innerHTML = '';
@@ -234,7 +246,11 @@
             snapshot.forEach(doc => {
                 const data = doc.data();
                 appendMessage('user', data.user);
-                if (data.ai.startsWith('http')) { appendImage(data.ai); } else { appendMessage('ai', data.ai); }
+                if (data.ai.includes('[https://image.pollinations.ai](https://image.pollinations.ai)')) { 
+                    appendImage(data.ai); 
+                } else { 
+                    appendMessage('ai', data.ai); 
+                }
             });
         }
 
