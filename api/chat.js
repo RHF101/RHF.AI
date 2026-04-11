@@ -1,4 +1,5 @@
 export default async function handler(req, res) {
+  // --- KONFIGURASI HEADER ---
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -9,15 +10,17 @@ export default async function handler(req, res) {
     const { pesan, isImage, history } = req.body;
     const apiKey = process.env.GEMINI_API_KEY;
 
-    // --- JALUR VISUAL (POLLINATIONS FLUX) ---
+    // --- GERBANG 1: JALUR VISUAL (HANYA AKTIF JIKA isImage TRUE) ---
     if (isImage === true || isImage === "true") {
       const seed = Math.floor(Math.random() * 1000000000);
       const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(pesan)}?width=1024&height=1024&nologo=true&seed=${seed}&model=flux`;
+      
+      // Response berhenti di sini, tidak akan lanjut ke bawah
       return res.status(200).json({ type: "image", reply: imageUrl });
     }
 
-    // --- JALUR OTAK (GEMINI 1.5 FLASH) ---
-    // Pastikan history dibersihkan agar tidak ada karakter aneh
+    // --- GERBANG 2: JALUR OTAK (HANYA AKTIF JIKA BUKAN GAMBAR) ---
+    // Filter history supaya link gambar tidak mengacaukan logika chat
     const cleanHistory = (history || [])
       .filter(item => item.content && typeof item.content === 'string' && !item.content.includes('pollinations.ai'))
       .map(item => ({
@@ -31,16 +34,12 @@ export default async function handler(req, res) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         contents: [
-          { role: "user", parts: [{ text: "Kamu adalah RHF-AI Omni-Core v3.0, AI asisten teknis ciptaan Radit Tiya. Kamu sangat teliti dalam coding, modding, dan engineering. Selalu panggil user dengan sebutan Radit." }] },
-          { role: "model", parts: [{ text: "Sistem Aktif. Menunggu perintah dari Radit Tiya." }] },
+          { role: "user", parts: [{ text: "Kamu adalah RHF-AI Omni-Core v3.0, AI asisten teknis ciptaan Radit Tiya. Kamu ahli dalam coding dan modding Android. Selalu panggil user dengan sebutan Radit." }] },
+          { role: "model", parts: [{ text: "Omni-Core v3.0 Sinkron. Siap menerima perintah, Radit." }] },
           ...cleanHistory,
           { role: "user", parts: [{ text: pesan }] }
         ],
-        generationConfig: { 
-          temperature: 0.8, 
-          maxOutputTokens: 2048,
-          topP: 0.95
-        }
+        generationConfig: { temperature: 0.8, maxOutputTokens: 2048 }
       })
     });
 
@@ -50,12 +49,11 @@ export default async function handler(req, res) {
       const text = data.candidates[0].content.parts[0].text;
       return res.status(200).json({ type: "text", reply: text });
     } else {
-      // Menangkap error spesifik dari Google
-      const msg = data.error ? data.error.message : "Neural Link Busy";
-      return res.status(200).json({ type: "text", reply: `Sistem Error: ${msg}` });
+      return res.status(200).json({ type: "text", reply: "Neural Link sedang sibuk, Radit. Coba lagi!" });
     }
 
   } catch (err) {
-    return res.status(200).json({ type: "text", reply: "Backend Offline. Cek API Key di Vercel!" });
+    // Catch-all jika ada masalah Node.js
+    return res.status(200).json({ type: "text", reply: "SYSTEM CRASH: Cek logs Vercel atau versi Node.js kamu." });
   }
 }
