@@ -3,63 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RHF-AI | Core</title>
+    <title>RHF-AI | Omni Core</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { background: #000; color: #fff; overflow: hidden; font-family: sans-serif; }
-        .sidebar { transition: transform 0.3s ease; width: 280px; }
+        body { background: #000; color: #e2e8f0; font-family: 'Inter', sans-serif; overflow: hidden; }
+        .glass { background: rgba(10, 10, 10, 0.8); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .sidebar { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); width: 280px; z-index: 100; }
         .sidebar.closed { transform: translateX(-100%); }
         .chat-container::-webkit-scrollbar { width: 0px; }
-        .img-result { border-radius: 15px; margin-top: 10px; border: 1px solid #333; }
+        .message-in { animation: fadeInUp 0.3s ease forwards; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        #overlay { background: rgba(0,0,0,0.6); transition: opacity 0.3s ease; }
+        textarea { max-height: 150px; }
     </style>
 </head>
 <body>
 
-    <div id="main-app" class="flex h-screen w-full relative">
-        
-        <div id="sidebar" class="sidebar fixed inset-y-0 left-0 bg-[#0a0a0a] border-r border-[#1a1a1a] z-50 p-5 flex flex-col closed">
-            <div class="flex justify-between items-center mb-8">
-                <h2 class="font-black text-xs tracking-[0.3em] text-blue-500">HISTORY</h2>
-                <button onclick="toggleSidebar()"><i class="fas fa-times text-slate-500"></i></button>
+    <div id="login-screen" class="fixed inset-0 bg-black z-[200] flex items-center justify-center p-6">
+        <div class="text-center w-full max-w-xs">
+            <div class="mb-8 relative">
+                <div class="absolute inset-0 bg-blue-600 blur-3xl opacity-20"></div>
+                <img src="https://uptight-emerald-6gmwz673ag.edgeone.app/file_00000000aa9471fabbcb615488cb4b8a.png" class="w-24 h-24 mx-auto rounded-3xl relative z-10 border border-white/10 shadow-2xl">
             </div>
-            <div id="chat-list" class="flex-1 overflow-y-auto space-y-2"></div>
-            <div class="mt-auto pt-4 border-t border-[#1a1a1a]">
-                <button onclick="logout()" class="text-[10px] font-bold text-red-500">SHUTDOWN</button>
+            <h1 class="text-3xl font-black tracking-tighter text-white mb-2">RHF-AI</h1>
+            <p class="text-[9px] text-slate-500 uppercase tracking-[0.5em] mb-12">Neural Identity System</p>
+            <button onclick="loginGoogle()" class="w-full bg-white text-black font-bold py-4 rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition-all shadow-xl">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5"> AUTHENTICATE
+            </button>
+        </div>
+    </div>
+
+    <div id="main-app" class="hidden flex h-screen w-full relative">
+        
+        <div id="sidebar" class="sidebar fixed inset-y-0 left-0 bg-[#050505] border-r border-white/5 flex flex-col closed">
+            <div class="p-6 flex justify-between items-center border-b border-white/5">
+                <span class="text-[10px] font-black tracking-widest text-blue-500 uppercase">Archive</span>
+                <button onclick="toggleSidebar()" class="text-slate-500"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="chat-list" class="flex-1 overflow-y-auto p-4 space-y-2"></div>
+            <div class="p-6 border-t border-white/5">
+                <button onclick="logout()" class="text-[10px] font-bold text-red-500 uppercase">Shutdown System</button>
             </div>
         </div>
 
-        <div class="flex-1 flex flex-col min-w-0">
-            <header class="h-14 border-b border-[#1a1a1a] flex items-center px-4 justify-between bg-black/50 backdrop-blur-md">
-                <button onclick="toggleSidebar()" class="p-2"><i class="fas fa-bars-staggered"></i></button>
-                <span class="text-[10px] font-black tracking-widest uppercase">RHF Neural Engine</span>
-                <button onclick="newChat()" class="p-2 text-blue-500"><i class="fas fa-plus-circle"></i></button>
+        <div id="overlay" onclick="toggleSidebar()" class="fixed inset-0 z-[90] hidden opacity-0"></div>
+
+        <div class="flex-1 flex flex-col min-w-0 bg-[#000]">
+            <header class="h-16 flex items-center px-4 justify-between glass sticky top-0 z-10">
+                <button onclick="toggleSidebar()" class="w-10 h-10 flex items-center justify-center text-slate-300">
+                    <i class="fas fa-bars-staggered"></i>
+                </button>
+                <div class="flex flex-col items-center">
+                    <span class="text-[10px] font-black tracking-[0.3em] text-white uppercase">Omni-Core</span>
+                    <span id="status-link" class="text-[7px] text-blue-500 font-mono tracking-widest">NEURAL LINK ACTIVE</span>
+                </div>
+                <button onclick="newChat()" class="w-10 h-10 flex items-center justify-center text-blue-500">
+                    <i class="fas fa-plus-circle text-xl"></i>
+                </button>
             </header>
 
-            <div id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-6"></div>
+            <div id="chat-container" class="flex-1 overflow-y-auto p-4 lg:p-8 space-y-6 chat-container">
+                <div class="h-full flex items-center justify-center opacity-10">
+                    <img src="https://uptight-emerald-6gmwz673ag.edgeone.app/file_00000000aa9471fabbcb615488cb4b8a.png" class="w-32 h-32">
+                </div>
+            </div>
 
-            <div class="p-4 bg-gradient-to-t from-black to-transparent">
-                <div class="max-w-3xl mx-auto flex items-end gap-2 bg-[#111] border border-[#222] rounded-2xl p-2 focus-within:border-blue-900 transition-all">
-                    <textarea id="user-input" rows="1" placeholder="Type or generate..." class="flex-1 bg-transparent border-none p-2 focus:ring-0 outline-none text-sm resize-none"></textarea>
-                    
-                    <button onclick="processAI(true)" id="btn-img" class="w-10 h-10 rounded-xl bg-[#1a1a1a] text-blue-400 hover:bg-blue-600 hover:text-white transition-all">
-                        <i class="fas fa-magic"></i>
-                    </button>
-                    
-                    <button onclick="processAI(false)" class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center">
-                        <i class="fas fa-paper-plane text-xs"></i>
-                    </button>
+            <div class="p-4 bg-gradient-to-t from-black via-black/90 to-transparent">
+                <div class="max-w-4xl mx-auto">
+                    <div class="bg-[#111] border border-white/5 rounded-3xl p-2 flex items-end gap-2 shadow-2xl focus-within:border-blue-500/50 transition-all">
+                        <textarea id="user-input" rows="1" placeholder="Type command..." class="flex-1 bg-transparent border-none p-3 focus:ring-0 outline-none text-sm text-slate-200 resize-none" oninput="autoResize(this)"></textarea>
+                        
+                        <div class="flex gap-2 p-1">
+                            <button onclick="processAI(true)" id="btn-img" class="w-11 h-11 rounded-2xl bg-[#1a1a1a] text-blue-400 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all active:scale-90">
+                                <i class="fas fa-wand-magic-sparkles text-sm"></i>
+                            </button>
+                            
+                            <button onclick="processAI(false)" id="btn-send" class="w-11 h-11 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-600/20 active:scale-90 transition-all">
+                                <i class="fas fa-paper-plane text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <p class="text-[7px] text-center text-slate-600 mt-3 tracking-[0.2em] uppercase">RHF-AI Infrastructure v3.0</p>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // CONFIG FIREBASE (Tetap pakai punya kamu)
-        const firebaseConfig = { /* ... data kamu ... */ };
+        // --- FIREBASE CONFIG ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyDNFXLa8WGAqhLnc8RrLLTgP3nLWvXkd1w",
+            authDomain: "rhf-confrims.firebaseapp.com",
+            databaseURL: "https://rhf-confrims-default-rtdb.firebaseio.com",
+            projectId: "rhf-confrims",
+            storageBucket: "rhf-confrims.firebasestorage.app",
+            messagingSenderId: "631231605918",
+            appId: "1:631231605918:web:d42d4e34e9ea14b2d65f8f",
+            measurementId: "G-XRKGWWX0ZP"
+        };
+
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
@@ -67,58 +113,159 @@
         let historyChat = [];
         let currentChatId = null;
 
-        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('closed'); }
+        // --- AUTH LOGIC ---
+        function loginGoogle() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('main-app').classList.remove('hidden');
+                loadChatList();
+            } else {
+                document.getElementById('login-screen').classList.remove('hidden');
+            }
+        });
+        function logout() { auth.signOut().then(() => location.reload()); }
 
+        // --- UI LOGIC ---
+        function toggleSidebar() {
+            const sb = document.getElementById('sidebar');
+            const ov = document.getElementById('overlay');
+            if(sb.classList.contains('closed')) {
+                sb.classList.remove('closed');
+                ov.classList.remove('hidden');
+                setTimeout(() => ov.classList.add('opacity-100'), 10);
+            } else {
+                sb.classList.add('closed');
+                ov.classList.remove('opacity-100');
+                setTimeout(() => ov.classList.add('hidden'), 300);
+            }
+        }
+
+        function autoResize(el) {
+            el.style.height = 'auto';
+            el.style.height = el.scrollHeight + 'px';
+        }
+
+        function newChat() {
+            currentChatId = null;
+            historyChat = [];
+            document.getElementById('chat-container').innerHTML = '';
+            if(window.innerWidth < 1024 && !document.getElementById('sidebar').classList.contains('closed')) toggleSidebar();
+        }
+
+        // --- CORE AI LOGIC (NO BUG) ---
         async function processAI(isImage) {
             const input = document.getElementById('user-input');
             const pesan = input.value.trim();
             if (!pesan) return;
 
+            // 1. Tampilkan pesan user & Reset Input
             appendMessage('user', pesan);
-            input.value = '';
-            
+            const originalPesan = pesan; // Backup pesan
+            input.value = ''; // BERSIHKAN BAR INPUT
+            input.style.height = 'auto';
+            input.blur(); // Tutup keyboard di HP
+
             const btnImg = document.getElementById('btn-img');
-            if(isImage) btnImg.innerHTML = '<i class="fas fa-spinner animate-spin"></i>';
+            const btnSend = document.getElementById('btn-send');
+
+            if(isImage) {
+                btnImg.innerHTML = '<i class="fas fa-circle-notch animate-spin"></i>';
+                appendMessage('ai', "Menganalisa data visual... Harap tunggu.");
+            }
 
             try {
-                const res = await fetch("/api/chat", {
+                const response = await fetch("/api/chat", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ pesan, isImage, history: historyChat })
+                    body: JSON.stringify({ pesan: originalPesan, isImage, history: historyChat })
                 });
-                const data = await res.json();
-                
+
+                const data = await response.json();
+
                 if (data.type === 'image') {
                     appendImage(data.reply);
                 } else {
                     appendMessage('ai', data.reply);
                 }
-                saveToFirestore(pesan, data.reply);
-            } catch (e) { appendMessage('ai', "Error connecting to Core."); }
-            
-            btnImg.innerHTML = '<i class="fas fa-magic"></i>';
+
+                saveToFirestore(originalPesan, data.reply);
+
+            } catch (err) {
+                appendMessage('ai', "SYSTEM ERROR: Koneksi ke Omni-Core terputus.");
+            } finally {
+                btnImg.innerHTML = '<i class="fas fa-wand-magic-sparkles text-sm"></i>';
+            }
         }
 
         function appendMessage(sender, text) {
             const container = document.getElementById('chat-container');
-            const div = document.createElement('div');
-            div.className = `flex ${sender === 'user' ? 'justify-end' : 'justify-start'}`;
-            div.innerHTML = `<div class="p-3 rounded-2xl text-sm ${sender === 'user' ? 'bg-blue-600' : 'bg-[#1a1a1a] text-slate-300'} max-w-[85%]">${text}</div>`;
-            container.appendChild(div);
+            const wrap = document.createElement('div');
+            wrap.className = `flex ${sender === 'user' ? 'justify-end' : 'justify-start'} message-in`;
+            
+            const inner = document.createElement('div');
+            inner.className = sender === 'user' 
+                ? "bg-blue-600 text-white px-5 py-3 rounded-3xl rounded-tr-none max-w-[85%] text-sm shadow-xl"
+                : "bg-[#111] border border-white/5 text-slate-300 px-5 py-3 rounded-3xl rounded-tl-none max-w-[85%] text-sm leading-relaxed shadow-lg";
+            
+            inner.innerText = text;
+            wrap.appendChild(inner);
+            container.appendChild(wrap);
             container.scrollTop = container.scrollHeight;
-            historyChat.push({ role: sender === 'user' ? 'user' : 'assistant', content: text });
+
+            if (sender !== 'user') {
+                historyChat.push({ role: 'assistant', content: text });
+            } else {
+                historyChat.push({ role: 'user', content: text });
+            }
         }
 
         function appendImage(url) {
             const container = document.getElementById('chat-container');
-            const div = document.createElement('div');
-            div.className = "flex justify-start";
-            div.innerHTML = `<img src="${url}" class="img-result w-full max-w-[300px]" alt="AI Visual">`;
-            container.appendChild(div);
+            const wrap = document.createElement('div');
+            wrap.className = "flex justify-start message-in";
+            wrap.innerHTML = `
+                <div class="bg-[#111] p-2 rounded-3xl border border-white/5 shadow-2xl max-w-[300px]">
+                    <img src="${url}" class="rounded-2xl w-full h-auto mb-2 border border-white/5" alt="Neural Render">
+                    <p class="text-[7px] text-slate-600 font-mono text-center uppercase tracking-widest">Render Output: Complete</p>
+                </div>
+            `;
+            container.appendChild(wrap);
             container.scrollTop = container.scrollHeight;
         }
 
-        // ... Sisanya fungsi Load Chat & Logout tetap sama ...
+        async function saveToFirestore(u, a) {
+            if (!currentChatId) currentChatId = "session_" + Date.now();
+            const uid = auth.currentUser.uid;
+            const docRef = db.collection('chats').doc(uid).collection('sessions').doc(currentChatId);
+            await docRef.set({ lastUpdated: firebase.firestore.FieldValue.serverTimestamp(), title: u.substring(0, 30) }, { merge: true });
+            await docRef.collection('messages').add({ user: u, ai: a, time: firebase.firestore.FieldValue.serverTimestamp() });
+            loadChatList();
+        }
+
+        async function loadChatList() {
+            const list = document.getElementById('chat-list');
+            const snapshot = await db.collection('chats').doc(auth.currentUser.uid).collection('sessions').orderBy('lastUpdated', 'desc').limit(15).get();
+            list.innerHTML = '';
+            snapshot.forEach(doc => {
+                const btn = document.createElement('button');
+                btn.className = "w-full text-left p-4 hover:bg-white/5 rounded-2xl text-[10px] truncate text-slate-500 hover:text-blue-400 transition-all mb-1 border border-transparent hover:border-white/5";
+                btn.innerHTML = `<i class="far fa-comment-alt mr-3 opacity-30"></i> ${doc.data().title}`;
+                btn.onclick = () => { loadMessages(doc.id); toggleSidebar(); };
+                list.appendChild(btn);
+            });
+        }
+
+        async function loadMessages(id) {
+            currentChatId = id;
+            document.getElementById('chat-container').innerHTML = '';
+            historyChat = [];
+            const snapshot = await db.collection('chats').doc(auth.currentUser.uid).collection('sessions').doc(id).collection('messages').orderBy('time').get();
+            snapshot.forEach(doc => {
+                appendMessage('user', doc.data().user);
+                appendMessage('ai', doc.data().ai);
+            });
+        }
     </script>
 </body>
 </html>
