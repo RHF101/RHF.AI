@@ -204,8 +204,13 @@
 
                 const data = await response.json();
 
-                if (data.type === 'image') {
-                    appendImage(data.reply);
+                if (data.type === "image") {
+                // Sesudah data diterima, jangan langsung tempel, tapi kasih nafas dulu
+                  setTimeout(() => {
+                  appendImage(data.reply);
+                   }, 500);
+                }
+                
                 } else {
                     appendMessage('ai', data.reply);
                 }
