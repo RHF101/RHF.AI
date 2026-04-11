@@ -175,11 +175,68 @@
         }
 
         // --- CORE AI LOGIC (NO BUG) ---
+       let currentAbortController = null; // Untuk fitur Batal
+
         async function processAI(isImage) {
             const input = document.getElementById('user-input');
             const pesan = input.value.trim();
             if (!pesan) return;
 
+            // Jika ada proses sebelumnya yang masih jalan, kita batalkan dulu
+            if (currentAbortController) currentAbortController.abort();
+            currentAbortController = new AbortController();
+
+            appendMessage('user', pesan);
+            const originalPesan = pesan;
+            input.value = '';
+            input.style.height = 'auto';
+
+            const btnImg = document.getElementById('btn-img');
+            const btnSend = document.getElementById('btn-send');
+
+            if(isImage) {
+                // Ganti icon jadi 'X' untuk fungsi Batal
+                btnImg.innerHTML = '<i class="fas fa-times text-red-500 animate-pulse"></i>';
+                btnImg.onclick = () => { location.reload(); }; // Cara paling aman buat reset sistem saat hang
+                appendMessage('ai', "Inisialisasi Neural Visual... Ketuk icon (X) untuk batal.");
+            }
+
+            try {
+                const response = await fetch("/api/chat", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ pesan: originalPesan, isImage, history: historyChat }),
+                    signal: currentAbortController.signal
+                });
+
+                const data = await response.json();
+
+                if (data.type === "image") {
+                    // Fitur Delay: Tunggu sebentar agar server stabil
+                    setTimeout(() => {
+                        appendImage(data.reply);
+                        btnImg.innerHTML = '<i class="fas fa-wand-magic-sparkles text-sm"></i>';
+                        btnImg.onclick = () => processAI(true); // Balikin fungsi asli
+                    }, 800);
+                } else {
+                    // Teks dengan Animasi Ketik Cepat
+                    typeWriter(data.reply);
+                }
+
+                saveToFirestore(originalPesan, data.reply);
+
+            } catch (err) {
+                if (err.name === 'AbortError') {
+                    console.log('User membatalkan proses.');
+                } else {
+                    appendMessage('ai', "SYSTEM ERROR: Koneksi ke Omni-Core terputus.");
+                }
+            } finally {
+                btnImg.innerHTML = '<i class="fas fa-wand-magic-sparkles text-sm"></i>';
+                btnImg.onclick = () => processAI(true);
+            }
+        }
+        
             // 1. Tampilkan pesan user & Reset Input
             appendMessage('user', pesan);
             const originalPesan = pesan; // Backup pesan
