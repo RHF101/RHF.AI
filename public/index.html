@@ -93,7 +93,77 @@
         </div>
     </div>
 
-    <script>
+<script>
+        // 1. TARUH DI PALING ATAS
+        let currentAbortController = null;
+        let historyChat = [];
+        let currentChatId = null;
+
+        // 2. FUNGSI FIREBASE (Jangan diubah-ubah bagian config-nya)
+        const firebaseConfig = {
+            apiKey: "AIzaSyDNFXLa8WGAqhLnc8RrLLTgP3nLWvXkd1w",
+            // ... (sisa config kamu)
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // 3. FUNGSI TYPEWRITER (Pastikan ada di sini)
+        function typeWriter(text) {
+            const container = document.getElementById('chat-container');
+            const wrap = document.createElement('div');
+            wrap.className = `flex justify-start message-in mb-4`;
+            const inner = document.createElement('div');
+            inner.className = "bg-[#111] border border-white/5 text-slate-300 px-5 py-3 rounded-3xl rounded-tl-none max-w-[85%] text-sm leading-relaxed shadow-lg";
+            wrap.appendChild(inner);
+            container.appendChild(wrap);
+            let i = 0;
+            function typing() {
+                if (i < text.length) {
+                    inner.innerText += text.charAt(i);
+                    i++;
+                    container.scrollTop = container.scrollHeight;
+                    setTimeout(typing, 10);
+                }
+            }
+            typing();
+            historyChat.push({ role: 'assistant', content: text });
+        }
+
+        // 4. FUNGSI APPEND IMAGE (Hanya Satu Saja!)
+        function appendImage(url) {
+            const container = document.getElementById('chat-container');
+            const wrap = document.createElement('div');
+            wrap.className = "flex justify-start message-in mb-4";
+            wrap.innerHTML = `
+                <div class="bg-[#111] p-2 rounded-3xl border border-white/5 shadow-2xl max-w-[300px] relative overflow-hidden">
+                    <div class="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-10">
+                        <i class="fas fa-sync animate-spin text-blue-500"></i>
+                    </div>
+                    <img src="${url}" 
+                         class="rounded-2xl w-full h-auto mb-2 border border-white/10 opacity-0 transition-opacity duration-1000" 
+                         onload="this.previousElementSibling.remove(); this.classList.remove('opacity-0')">
+                    <p class="text-[7px] text-slate-600 font-mono text-center uppercase tracking-widest">Render Output: Verified</p>
+                </div>`;
+            container.appendChild(wrap);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // 5. AUTH LOGIC (Pastikan ini tidak tertutup oleh fungsi lain)
+        function loginGoogle() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('main-app').classList.remove('hidden');
+                loadChatList();
+            } else {
+                document.getElementById('login-screen').classList.remove('hidden');
+            }
+        });
+        
+        // ... Sisa fungsi lainnya (processAI, appendMessage, dll)
+        </script>
+    
         function appendImage(url) {
             const container = document.getElementById('chat-container');
             const wrap = document.createElement('div');
