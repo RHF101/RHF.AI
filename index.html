@@ -21,7 +21,7 @@
         .message-in { animation: fadeInUp 0.4s ease forwards; }
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
         #overlay { background: rgba(0,0,0,0.7); display: none; position: fixed; inset: 0; z-index: 90; }
-        .code-font { font-family: 'JetBrains Mono', monospace; font-size: 12px; background: #111; padding: 10px; border-radius: 8px; border: 1px solid #333; margin-top: 5px; }
+        .code-font { font-family: 'JetBrains Mono', monospace; font-size: 12px; background: #111; padding: 12px; border-radius: 12px; border: 1px solid #333; margin-top: 8px; display: block; overflow-x: auto; color: #10b981; }
     </style>
 </head>
 <body>
@@ -66,7 +66,7 @@
                 <div class="max-w-4xl mx-auto flex items-end gap-2 bg-[#0a0a0a] border border-white/5 rounded-[2rem] p-2 shadow-2xl">
                     <textarea id="user-input" rows="1" placeholder="Enter command..." class="flex-1 bg-transparent p-4 outline-none text-sm text-slate-200 resize-none" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
                     <div class="flex gap-1 p-1">
-                        <button onclick="processAI(true)" class="w-12 h-12 rounded-full text-blue-400 hover:bg-blue-500/10"><i class="fas fa-wand-magic-sparkles"></i></button>
+                        <button onclick="processAI(true)" title="Generate Visual" class="w-12 h-12 rounded-full text-blue-400 hover:bg-blue-500/10"><i class="fas fa-wand-magic-sparkles"></i></button>
                         <button onclick="processAI(false)" id="btn-send" class="w-12 h-12 rounded-full bg-blue-600 text-white shadow-lg shadow-blue-600/30 active:scale-90 transition-all"><i class="fas fa-paper-plane text-xs"></i></button>
                     </div>
                 </div>
@@ -109,7 +109,7 @@
             ov.style.display = sb.classList.contains('open') ? 'block' : 'none';
         }
 
-        async function processAI(isImage) {
+        async function processAI(isImageMode) {
             const input = document.getElementById('user-input');
             const pesan = input.value.trim();
             if (!pesan) return;
@@ -119,17 +119,18 @@
             input.style.height = 'auto';
 
             try {
+                // Endpoint relatif agar bekerja di Vercel
                 const response = await fetch("/api/chat", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ 
                         pesan: pesan, 
-                        isImage: isImage, 
+                        isImage: isImageMode, 
                         history: historyChat 
                     })
                 });
 
-                if (!response.ok) throw new Error("API_OFFLINE");
+                if (!response.ok) throw new Error("API_REJECTED");
 
                 const data = await response.json();
                 
@@ -142,8 +143,8 @@
                 }
 
             } catch (err) {
-                console.error(err);
-                appendMessage('ai', "SYSTEM ERROR: Hubungan dengan Omni-Core terputus. Pastikan API Key di Vercel Settings sudah benar.");
+                console.error("Connection Error:", err);
+                appendMessage('ai', "SYSTEM ERROR: Hubungan dengan Omni-Core terputus. Pastikan folder 'api' sudah terunggah dan API Key di Vercel sudah benar.");
             }
         }
 
@@ -170,7 +171,6 @@
             const inner = document.createElement('div');
             inner.className = "bg-[#0a0a0a] border border-white/10 text-slate-300 px-5 py-4 rounded-2xl rounded-tl-none text-[13px] max-w-[90%] whitespace-pre-wrap leading-relaxed";
             
-            // Cek jika mengandung code block
             if (text.includes('```')) inner.classList.add('code-font');
             
             wrap.appendChild(inner);
@@ -183,7 +183,7 @@
                     inner.innerText += text.charAt(i);
                     i++;
                     container.scrollTop = container.scrollHeight;
-                    setTimeout(typing, 2); // Dipercepat biar gak nunggu lama
+                    setTimeout(typing, 5); 
                 }
             }
             typing();
@@ -195,10 +195,11 @@
             const wrap = document.createElement('div');
             wrap.className = "flex justify-start message-in mb-4";
             wrap.innerHTML = `<div class="bg-[#0a0a0a] p-2 rounded-2xl border border-white/10 max-w-[280px]">
-                <img src="${url}" class="rounded-xl w-full shadow-2xl border border-white/5">
+                <img src="${url}" class="rounded-xl w-full shadow-2xl border border-white/5" loading="lazy">
             </div>`;
             container.appendChild(wrap);
             container.scrollTop = container.scrollHeight;
+            historyChat.push({ role: 'assistant', content: url });
         }
 
         async function saveToFirestore(u, a) {
@@ -237,7 +238,7 @@
         async function loadMessages(id) {
             currentChatId = id;
             const container = document.getElementById('chat-container');
-            container.innerHTML = '<p class="text-center text-[9px] opacity-20 py-10 uppercase tracking-widest">Neural Link Syncing...</p>';
+            container.innerHTML = '<p class="text-center text-[9px] opacity-20 py-10 uppercase tracking-widest italic">Neural Link Syncing...</p>';
             historyChat = [];
             if(window.innerWidth < 1024) toggleSidebar();
 
@@ -246,7 +247,8 @@
             snapshot.forEach(doc => {
                 const data = doc.data();
                 appendMessage('user', data.user);
-                if (data.ai.includes('[https://image.pollinations.ai](https://image.pollinations.ai)')) { 
+                // Deteksi apakah balasan AI adalah URL gambar Pollinations
+                if (data.ai.includes('pollinations.ai')) { 
                     appendImage(data.ai); 
                 } else { 
                     appendMessage('ai', data.ai); 
