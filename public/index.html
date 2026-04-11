@@ -3,72 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RHF-AI</title>
+    <title>RHF-AI | Core</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { overflow: hidden; background: #ffffff; }
+        body { background: #000; color: #fff; overflow: hidden; font-family: sans-serif; }
+        .sidebar { transition: transform 0.3s ease; width: 280px; }
+        .sidebar.closed { transform: translateX(-100%); }
         .chat-container::-webkit-scrollbar { width: 0px; }
-        .sidebar-transition { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .message-bubble { max-width: 85%; word-wrap: break-word; }
-        /* Animasi geser untuk mobile */
-        #sidebar.hidden-mobile { transform: translateX(-100%); }
+        .img-result { border-radius: 15px; margin-top: 10px; border: 1px solid #333; }
     </style>
 </head>
-<body class="text-slate-900 font-sans">
+<body>
 
-    <div id="login-screen" class="fixed inset-0 bg-white z-[100] flex items-center justify-center p-6">
-        <div class="text-center w-full max-w-xs">
-            <img src="https://uptight-emerald-6gmwz673ag.edgeone.app/file_00000000aa9471fabbcb615488cb4b8a.png" class="w-20 h-20 mx-auto rounded-2xl mb-6 shadow-lg">
-            <h1 class="text-2xl font-bold tracking-tighter mb-8">RHF-AI SYSTEM</h1>
-            <button onclick="loginGoogle()" class="w-full border-2 border-slate-100 py-3 rounded-xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-all">
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5"> Login
-            </button>
-        </div>
-    </div>
-
-    <div id="main-app" class="hidden flex h-screen overflow-hidden relative">
+    <div id="main-app" class="flex h-screen w-full relative">
         
-        <div id="sidebar" class="sidebar-transition fixed lg:relative w-72 h-full bg-slate-50 border-r border-slate-100 z-50 flex flex-col -translate-x-full lg:translate-x-0">
-            <div class="p-5 border-b border-slate-100 flex justify-between items-center">
-                <span class="font-bold text-sm tracking-widest text-blue-600">HISTORY</span>
-                <button onclick="toggleSidebar()" class="lg:hidden p-2 text-slate-400"><i class="fas fa-chevron-left"></i></button>
+        <div id="sidebar" class="sidebar fixed inset-y-0 left-0 bg-[#0a0a0a] border-r border-[#1a1a1a] z-50 p-5 flex flex-col closed">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="font-black text-xs tracking-[0.3em] text-blue-500">HISTORY</h2>
+                <button onclick="toggleSidebar()"><i class="fas fa-times text-slate-500"></i></button>
             </div>
-            
-            <div id="chat-list" class="flex-1 overflow-y-auto p-4 space-y-2">
-                </div>
-
-            <div class="p-5 border-t border-slate-100">
-                <button onclick="logout()" class="text-[10px] font-bold text-red-500 uppercase tracking-widest">Logout</button>
+            <div id="chat-list" class="flex-1 overflow-y-auto space-y-2"></div>
+            <div class="mt-auto pt-4 border-t border-[#1a1a1a]">
+                <button onclick="logout()" class="text-[10px] font-bold text-red-500">SHUTDOWN</button>
             </div>
         </div>
 
-        <div id="overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/20 z-40 hidden"></div>
-
-        <div class="flex-1 flex flex-col min-w-0 bg-white">
-            <header class="h-14 border-b border-slate-100 flex items-center px-4 justify-between">
-                <button onclick="toggleSidebar()" class="p-2 text-slate-600">
-                    <i class="fas fa-bars-staggered"></i>
-                </button>
-                <span class="text-[10px] font-black uppercase tracking-[0.2em]">RHF-AI Engine</span>
-                <button onclick="newChat()" class="text-blue-600 p-2"><i class="fas fa-plus"></i></button>
+        <div class="flex-1 flex flex-col min-w-0">
+            <header class="h-14 border-b border-[#1a1a1a] flex items-center px-4 justify-between bg-black/50 backdrop-blur-md">
+                <button onclick="toggleSidebar()" class="p-2"><i class="fas fa-bars-staggered"></i></button>
+                <span class="text-[10px] font-black tracking-widest uppercase">RHF Neural Engine</span>
+                <button onclick="newChat()" class="p-2 text-blue-500"><i class="fas fa-plus-circle"></i></button>
             </header>
 
-            <div id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-4 chat-container">
-                </div>
+            <div id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-6"></div>
 
-            <div class="p-4">
-                <div class="max-w-4xl mx-auto flex items-end gap-2 bg-slate-100 rounded-2xl p-2 border border-slate-200">
-                    <textarea id="user-input" rows="1" placeholder="Tanya sesuatu..." class="flex-1 bg-transparent border-none p-2 focus:ring-0 outline-none text-sm resize-none"></textarea>
+            <div class="p-4 bg-gradient-to-t from-black to-transparent">
+                <div class="max-w-3xl mx-auto flex items-end gap-2 bg-[#111] border border-[#222] rounded-2xl p-2 focus-within:border-blue-900 transition-all">
+                    <textarea id="user-input" rows="1" placeholder="Type or generate..." class="flex-1 bg-transparent border-none p-2 focus:ring-0 outline-none text-sm resize-none"></textarea>
                     
-                    <button onclick="generateImage()" class="w-10 h-10 rounded-xl bg-white text-blue-600 flex items-center justify-center shadow-sm active:scale-90">
-                        <i class="fas fa-image"></i>
+                    <button onclick="processAI(true)" id="btn-img" class="w-10 h-10 rounded-xl bg-[#1a1a1a] text-blue-400 hover:bg-blue-600 hover:text-white transition-all">
+                        <i class="fas fa-magic"></i>
                     </button>
                     
-                    <button onclick="sendMessage()" class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center active:scale-90">
+                    <button onclick="processAI(false)" class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center">
                         <i class="fas fa-paper-plane text-xs"></i>
                     </button>
                 </div>
@@ -77,17 +58,8 @@
     </div>
 
     <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyDNFXLa8WGAqhLnc8RrLLTgP3nLWvXkd1w",
-            authDomain: "rhf-confrims.firebaseapp.com",
-            databaseURL: "https://rhf-confrims-default-rtdb.firebaseio.com",
-            projectId: "rhf-confrims",
-            storageBucket: "rhf-confrims.firebasestorage.app",
-            messagingSenderId: "631231605918",
-            appId: "1:631231605918:web:d42d4e34e9ea14b2d65f8f",
-            measurementId: "G-XRKGWWX0ZP"
-        };
-
+        // CONFIG FIREBASE (Tetap pakai punya kamu)
+        const firebaseConfig = { /* ... data kamu ... */ };
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
@@ -95,126 +67,58 @@
         let historyChat = [];
         let currentChatId = null;
 
-        function loginGoogle() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('closed'); }
 
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                document.getElementById('login-screen').classList.add('hidden');
-                document.getElementById('main-app').classList.remove('hidden');
-                loadChatList();
-            } else {
-                document.getElementById('login-screen').classList.remove('hidden');
-            }
-        });
-
-        function logout() { auth.signOut().then(() => location.reload()); }
-
-        // FUNGSI GANTI/HILANGKAN SIDEBAR
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('overlay');
-            const isOpen = sidebar.classList.contains('translate-x-0');
-
-            if (isOpen) {
-                sidebar.classList.remove('translate-x-0');
-                sidebar.classList.add('-translate-x-full');
-                overlay.classList.add('hidden');
-            } else {
-                sidebar.classList.remove('-translate-x-full');
-                sidebar.classList.add('translate-x-0');
-                overlay.classList.remove('hidden');
-            }
-        }
-
-        function newChat() {
-            currentChatId = null;
-            historyChat = [];
-            document.getElementById('chat-container').innerHTML = '';
-            if(window.innerWidth < 1024) toggleSidebar();
-        }
-
-        async function sendMessage() {
+        async function processAI(isImage) {
             const input = document.getElementById('user-input');
             const pesan = input.value.trim();
             if (!pesan) return;
+
             appendMessage('user', pesan);
             input.value = '';
-            input.style.height = 'auto';
+            
+            const btnImg = document.getElementById('btn-img');
+            if(isImage) btnImg.innerHTML = '<i class="fas fa-spinner animate-spin"></i>';
 
             try {
                 const res = await fetch("/api/chat", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ pesan, history: historyChat, email: auth.currentUser.email })
+                    body: JSON.stringify({ pesan, isImage, history: historyChat })
                 });
                 const data = await res.json();
-                appendMessage('ai', data.reply);
+                
+                if (data.type === 'image') {
+                    appendImage(data.reply);
+                } else {
+                    appendMessage('ai', data.reply);
+                }
                 saveToFirestore(pesan, data.reply);
-            } catch (e) { appendMessage('ai', "Error: System Offline."); }
-        }
-
-        function generateImage() {
-            const prompt = document.getElementById('user-input').value;
-            if(!prompt) {
-                alert("Ketik deskripsi gambar dulu di kotak pesan!");
-                return;
-            }
-            appendMessage('ai', "Sedang memproses visualisasi untuk: " + prompt + "...");
-            // Di sini nanti kita hubungkan ke API Image
+            } catch (e) { appendMessage('ai', "Error connecting to Core."); }
+            
+            btnImg.innerHTML = '<i class="fas fa-magic"></i>';
         }
 
         function appendMessage(sender, text) {
             const container = document.getElementById('chat-container');
-            const wrapper = document.createElement('div');
-            wrapper.className = sender === 'user' ? "flex justify-end" : "flex justify-start";
-            
-            const bubble = document.createElement('div');
-            bubble.className = `message-bubble p-3 rounded-2xl text-sm ${sender === 'user' ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-slate-100 text-slate-800 rounded-tl-none'}`;
-            bubble.innerText = text;
-            
-            wrapper.appendChild(bubble);
-            container.appendChild(wrapper);
+            const div = document.createElement('div');
+            div.className = `flex ${sender === 'user' ? 'justify-end' : 'justify-start'}`;
+            div.innerHTML = `<div class="p-3 rounded-2xl text-sm ${sender === 'user' ? 'bg-blue-600' : 'bg-[#1a1a1a] text-slate-300'} max-w-[85%]">${text}</div>`;
+            container.appendChild(div);
             container.scrollTop = container.scrollHeight;
             historyChat.push({ role: sender === 'user' ? 'user' : 'assistant', content: text });
         }
 
-        async function saveToFirestore(u, a) {
-            if (!currentChatId) currentChatId = "session_" + Date.now();
-            const uid = auth.currentUser.uid;
-            const docRef = db.collection('chats').doc(uid).collection('sessions').doc(currentChatId);
-            await docRef.set({ lastUpdated: firebase.firestore.FieldValue.serverTimestamp(), title: u.substring(0, 30) }, { merge: true });
-            await docRef.collection('messages').add({ user: u, ai: a, time: firebase.firestore.FieldValue.serverTimestamp() });
-            loadChatList();
+        function appendImage(url) {
+            const container = document.getElementById('chat-container');
+            const div = document.createElement('div');
+            div.className = "flex justify-start";
+            div.innerHTML = `<img src="${url}" class="img-result w-full max-w-[300px]" alt="AI Visual">`;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
         }
 
-        async function loadChatList() {
-            const list = document.getElementById('chat-list');
-            const snapshot = await db.collection('chats').doc(auth.currentUser.uid).collection('sessions').orderBy('lastUpdated', 'desc').limit(15).get();
-            list.innerHTML = '';
-            snapshot.forEach(doc => {
-                const btn = document.createElement('button');
-                btn.className = "w-full text-left p-3 hover:bg-white rounded-xl text-[11px] truncate text-slate-400 border border-transparent transition-all";
-                btn.innerText = doc.data().title;
-                btn.onclick = () => {
-                    loadMessages(doc.id);
-                    toggleSidebar(); // Otomatis tutup sidebar setelah pilih chat
-                };
-                list.appendChild(btn);
-            });
-        }
-
-        async function loadMessages(id) {
-            currentChatId = id; document.getElementById('chat-container').innerHTML = ''; historyChat = [];
-            const snapshot = await db.collection('chats').doc(auth.currentUser.uid).collection('sessions').doc(id).collection('messages').orderBy('time').get();
-            snapshot.forEach(doc => {
-                appendMessage('user', doc.data().user);
-                appendMessage('ai', doc.data().ai);
-            });
-        }
-
-        document.getElementById('user-input').addEventListener('input', function() {
-            this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';
-        });
+        // ... Sisanya fungsi Load Chat & Logout tetap sama ...
     </script>
 </body>
 </html>
