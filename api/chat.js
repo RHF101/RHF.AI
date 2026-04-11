@@ -1,73 +1,65 @@
 export default async function handler(req, res) {
-    // Header CORS agar tidak diblokir browser
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
     if (req.method === 'OPTIONS') return res.status(200).end();
 
     const { pesan, isImage, history } = req.body;
-
-    // LANGSUNG TEMPEL TOKEN DI SINI (Biar tidak tergantung Environment Vercel dulu)
-    const HF_TOKEN = "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"; 
-    const GROQ_KEY = process.env.GROQ_API_KEY;
+    const HF_TOKEN = process.env.HF_TOKEN; 
 
     if (isImage) {
-        try {
-            console.log("Memulai Render untuk:", pesan);
+        // Daftar Model: Coba FLUX dulu, kalau 410/Error, coba Stable Diffusion
+        const models = [
+            "black-forest-labs/FLUX.1-schnell",
+            "stabilityai/stable-diffusion-xl-base-1.0"
+        ];
 
-            const response = await fetch(
-                "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0",
-                {
-                    headers: { 
-                        "Authorization": `Bearer ${HF_TOKEN}`,
-                        "Content-Type": "application/json",
-                        "x-use-cache": "false" // Paksa server render baru
-                    },
-                    method: "POST",
-                    body: JSON.stringify({ inputs: pesan }),
-                }
-            );
+        for (const model of models) {
+            try {
+                const response = await fetch(
+                    `https://api-inference.huggingface.co/models/${model}`,
+                    {
+                        headers: { 
+                            "Authorization": `Bearer ${HF_TOKEN}`,
+                            "Content-Type": "application/json",
+                        },
+                        method: "POST",
+                        body: JSON.stringify({ inputs: pesan }),
+                    }
+                );
 
-            // JIKA ERROR DARI SERVER HUGGING FACE
-            if (!response.ok) {
-                const errorInfo = await response.text();
-                console.error("HF Error Detail:", errorInfo);
-                
-                // Jika server sedang loading model (sering terjadi pada token baru)
-                if (response.status === 503) {
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const buffer = Buffer.from(await blob.arrayBuffer());
                     return res.status(200).json({ 
-                        reply: "Server AI sedang 'pemanasan' (Loading Model). Coba klik tombol kirim lagi dalam 10 detik, Dit!", 
-                        type: "text" 
+                        reply: `data:image/png;base64,${buffer.toString('base64')}`, 
+                        type: "image" 
                     });
                 }
-                throw new Error(`HF Status: ${response.status}`);
+                
+                console.log(`Model ${model} gagal, mencoba model berikutnya...`);
+            } catch (err) {
+                continue; // Lanjut ke model cadangan
             }
-
-            const blob = await response.blob();
-            const buffer = Buffer.from(await blob.arrayBuffer());
-            const base64Image = buffer.toString('base64');
-            
-            return res.status(200).json({ 
-                reply: `data:image/png;base64,${base64Image}`, 
-                type: "image" 
-            });
-
-        } catch (e) {
-            console.error("Catch Error:", e.message);
-            return res.status(500).json({ reply: `Error Sistem Visual: ${e.message}. Coba lagi, Dit!` });
         }
+
+        // Jika semua model gagal
+        return res.status(500).json({ reply: "Semua jalur visual sibuk atau pindah alamat (410). Coba prompt lain, Dit!" });
     }
 
-    // LOGIKA TEKS (GROQ)
+    // --- LOGIKA TEKS (Sama seperti sebelumnya) ---
     try {
         const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
             method: "POST",
-            headers: { "Authorization": `Bearer ${GROQ_KEY}`, "Content-Type": "application/json" },
+            headers: { 
+                "Authorization": `Bearer ${process.env.GROQ_API_KEY}`, 
+                "Content-Type": "application/json" 
+            },
             body: JSON.stringify({
                 model: "llama-3.3-70b-versatile",
                 messages: [
-                    { role: "system", content: "Kamu adalah RHF-AI Omni-Core. Partner taktis Radit Tiya." },
+                    { role: "system", content: "Kamu adalah RHF-AI. Partner Radit." },
                     ...history || [],
                     { role: "user", content: pesan }
                 ]
@@ -75,7 +67,7 @@ export default async function handler(req, res) {
         });
         const data = await response.json();
         res.status(200).json({ reply: data.choices[0].message.content, type: "text" });
-    } catch (error) {
-        res.status(500).json({ reply: "Sistem Teks Offline." });
+    } catch (e) {
+        res.status(500).json({ reply: "Neural Link Teks terputus." });
     }
 }
