@@ -138,10 +138,16 @@
             document.getElementById('sidebar').classList.toggle('-translate-x-full');
         }
 
+        // --- MODIFIKASI NEW CHAT ---
         function newChat() {
-            currentChatId = Date.now().toString();
+            currentChatId = null; // Menghapus ID agar pesan berikutnya dianggap sesi baru
             historyChat = [];
-            document.getElementById('chat-container').innerHTML = '';
+            document.getElementById('chat-container').innerHTML = `
+                <div class="text-center py-10">
+                    <img src="https://uptight-emerald-6gmwz673ag.edgeone.app/file_00000000aa9471fabbcb615488cb4b8a.png" class="w-12 h-12 mx-auto opacity-20 grayscale mb-3">
+                    <p class="text-slate-300 text-xs font-medium uppercase tracking-[0.2em]">Sesi Baru Dimulai</p>
+                </div>
+            `;
             if(window.innerWidth < 1024) toggleSidebar();
         }
 
@@ -179,7 +185,6 @@
             wrapper.className = sender === 'user' ? "flex justify-end" : "flex justify-start";
 
             const bubble = document.createElement('div');
-            // Warna: User (Abu-abu), AI (Putih bersih)
             bubble.className = sender === 'user' 
                 ? "bg-[#e2e8f0] text-slate-800 px-5 py-3 rounded-2xl rounded-tr-none max-w-[85%] shadow-sm text-sm"
                 : "bg-white text-slate-700 border border-slate-100 px-5 py-3 rounded-2xl rounded-tl-none max-w-[85%] shadow-md text-sm leading-relaxed";
@@ -192,14 +197,19 @@
             historyChat.push({ role: sender === 'user' ? 'user' : 'assistant', content: text });
         }
 
+        // --- MODIFIKASI SAVE TO FIRESTORE ---
         async function saveToFirestore(uPesan, aPesan) {
-            if (!currentChatId) currentChatId = Date.now().toString();
+            // Jika ID kosong, buat ID baru berdasarkan waktu saat ini
+            if (!currentChatId) {
+                currentChatId = "session_" + Date.now();
+            }
+            
             const uid = auth.currentUser.uid;
             const docRef = db.collection('chats').doc(uid).collection('sessions').doc(currentChatId);
             
             await docRef.set({
                 lastUpdated: firebase.firestore.FieldValue.serverTimestamp(),
-                title: uPesan.substring(0, 30)
+                title: uPesan.substring(0, 30) // Menggunakan potongan pesan sebagai judul di sidebar
             }, { merge: true });
 
             await docRef.collection('messages').add({
@@ -207,7 +217,7 @@
                 ai: aPesan,
                 time: firebase.firestore.FieldValue.serverTimestamp()
             });
-            loadChatList();
+            loadChatList(); // Memperbarui daftar di sidebar agar sesi baru muncul
         }
 
         async function loadChatList() {
@@ -238,7 +248,6 @@
             if(window.innerWidth < 1024) toggleSidebar();
         }
 
-        // Auto-resize textarea
         document.getElementById('user-input').addEventListener('input', function() {
             this.style.height = 'auto';
             this.style.height = (this.scrollHeight) + 'px';
