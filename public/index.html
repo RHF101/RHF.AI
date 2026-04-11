@@ -38,7 +38,6 @@
     </div>
 
     <div id="main-app" class="hidden flex h-screen w-full relative">
-        
         <div id="sidebar" class="sidebar fixed inset-y-0 left-0 bg-[#050505] border-r border-white/5 flex flex-col closed">
             <div class="p-6 flex justify-between items-center border-b border-white/5">
                 <span class="text-[10px] font-black tracking-widest text-blue-500 uppercase">Archive</span>
@@ -76,12 +75,10 @@
                 <div class="max-w-4xl mx-auto">
                     <div class="bg-[#111] border border-white/5 rounded-3xl p-2 flex items-end gap-2 shadow-2xl focus-within:border-blue-500/50 transition-all">
                         <textarea id="user-input" rows="1" placeholder="Type command..." class="flex-1 bg-transparent border-none p-3 focus:ring-0 outline-none text-sm text-slate-200 resize-none" oninput="autoResize(this)"></textarea>
-                        
                         <div class="flex gap-2 p-1">
                             <button onclick="processAI(true)" id="btn-img" class="w-11 h-11 rounded-2xl bg-[#1a1a1a] text-blue-400 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all active:scale-90">
                                 <i class="fas fa-wand-magic-sparkles text-sm"></i>
                             </button>
-                            
                             <button onclick="processAI(false)" id="btn-send" class="w-11 h-11 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-600/20 active:scale-90 transition-all">
                                 <i class="fas fa-paper-plane text-xs"></i>
                             </button>
@@ -93,116 +90,12 @@
         </div>
     </div>
 
-<script>
-        // 1. TARUH DI PALING ATAS
+    <script>
+        // --- INITIAL STATE ---
         let currentAbortController = null;
         let historyChat = [];
         let currentChatId = null;
 
-        // 2. FUNGSI FIREBASE (Jangan diubah-ubah bagian config-nya)
-        const firebaseConfig = {
-            apiKey: "AIzaSyDNFXLa8WGAqhLnc8RrLLTgP3nLWvXkd1w",
-            // ... (sisa config kamu)
-        };
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-
-        // 3. FUNGSI TYPEWRITER (Pastikan ada di sini)
-        function typeWriter(text) {
-            const container = document.getElementById('chat-container');
-            const wrap = document.createElement('div');
-            wrap.className = `flex justify-start message-in mb-4`;
-            const inner = document.createElement('div');
-            inner.className = "bg-[#111] border border-white/5 text-slate-300 px-5 py-3 rounded-3xl rounded-tl-none max-w-[85%] text-sm leading-relaxed shadow-lg";
-            wrap.appendChild(inner);
-            container.appendChild(wrap);
-            let i = 0;
-            function typing() {
-                if (i < text.length) {
-                    inner.innerText += text.charAt(i);
-                    i++;
-                    container.scrollTop = container.scrollHeight;
-                    setTimeout(typing, 10);
-                }
-            }
-            typing();
-            historyChat.push({ role: 'assistant', content: text });
-        }
-
-        // 4. FUNGSI APPEND IMAGE (Hanya Satu Saja!)
-        function appendImage(url) {
-            const container = document.getElementById('chat-container');
-            const wrap = document.createElement('div');
-            wrap.className = "flex justify-start message-in mb-4";
-            wrap.innerHTML = `
-                <div class="bg-[#111] p-2 rounded-3xl border border-white/5 shadow-2xl max-w-[300px] relative overflow-hidden">
-                    <div class="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-10">
-                        <i class="fas fa-sync animate-spin text-blue-500"></i>
-                    </div>
-                    <img src="${url}" 
-                         class="rounded-2xl w-full h-auto mb-2 border border-white/10 opacity-0 transition-opacity duration-1000" 
-                         onload="this.previousElementSibling.remove(); this.classList.remove('opacity-0')">
-                    <p class="text-[7px] text-slate-600 font-mono text-center uppercase tracking-widest">Render Output: Verified</p>
-                </div>`;
-            container.appendChild(wrap);
-            container.scrollTop = container.scrollHeight;
-        }
-
-        // 5. AUTH LOGIC (Pastikan ini tidak tertutup oleh fungsi lain)
-        function loginGoogle() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                document.getElementById('login-screen').classList.add('hidden');
-                document.getElementById('main-app').classList.remove('hidden');
-                loadChatList();
-            } else {
-                document.getElementById('login-screen').classList.remove('hidden');
-            }
-        });
-        
-        // ... Sisa fungsi lainnya (processAI, appendMessage, dll)
-        </script>
-    
-        function appendImage(url) {
-            const container = document.getElementById('chat-container');
-            const wrap = document.createElement('div');
-            wrap.className = "flex justify-start message-in mb-4";
-            
-            wrap.innerHTML = `
-                <div class="bg-[#111] p-2 rounded-3xl border border-white/5 shadow-2xl max-w-[300px] relative overflow-hidden">
-                    <div id="loader" class="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-10">
-                        <i class="fas fa-sync animate-spin text-blue-500"></i>
-                    </div>
-                    <img src="${url}" 
-                         class="rounded-2xl w-full h-auto mb-2 border border-white/10 opacity-0 transition-opacity duration-1000" 
-                         alt="Neural Render"
-                         onload="this.previousElementSibling.remove(); this.classList.remove('opacity-0'); console.log('Render Success')">
-                    <p class="text-[7px] text-slate-600 font-mono text-center uppercase tracking-widest">Render Output: Verified</p>
-                </div>
-            `;
-            
-            container.appendChild(wrap);
-            container.scrollTop = container.scrollHeight;
-                }
-        
-    
-    // Kita tambahkan penanganan error jika gambar gagal dimuat
-    wrap.innerHTML = `
-        <div class="bg-[#111] p-2 rounded-3xl border border-white/5 shadow-2xl max-w-[300px]">
-            <img src="${url}" 
-                 class="rounded-2xl w-full h-auto mb-2 border border-white/10" 
-                 alt="Neural Render"
-                 onload="console.log('Image Loaded Success')"
-                 onerror="this.src='https://via.placeholder.com/300?text=Render+Ulang+Dit'">
-            <p class="text-[7px] text-slate-600 font-mono text-center uppercase tracking-widest">Render Output: Verified</p>
-        </div>
-    `;
-    
-    container.appendChild(wrap);
-    container.scrollTop = container.scrollHeight;
-        }
-        
         // --- FIREBASE CONFIG ---
         const firebaseConfig = {
             apiKey: "AIzaSyDNFXLa8WGAqhLnc8RrLLTgP3nLWvXkd1w",
@@ -219,9 +112,6 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        let historyChat = [];
-        let currentChatId = null;
-
         // --- AUTH LOGIC ---
         function loginGoogle() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
         auth.onAuthStateChanged(user => {
@@ -235,7 +125,7 @@
         });
         function logout() { auth.signOut().then(() => location.reload()); }
 
-        // --- UI LOGIC ---
+        // --- UI UTILS ---
         function toggleSidebar() {
             const sb = document.getElementById('sidebar');
             const ov = document.getElementById('overlay');
@@ -262,15 +152,12 @@
             if(window.innerWidth < 1024 && !document.getElementById('sidebar').classList.contains('closed')) toggleSidebar();
         }
 
-        // --- CORE AI LOGIC (NO BUG) ---
-       let currentAbortController = null; // Untuk fitur Batal
-
+        // --- CORE AI LOGIC ---
         async function processAI(isImage) {
             const input = document.getElementById('user-input');
             const pesan = input.value.trim();
             if (!pesan) return;
 
-            // Jika ada proses sebelumnya yang masih jalan, kita batalkan dulu
             if (currentAbortController) currentAbortController.abort();
             currentAbortController = new AbortController();
 
@@ -278,14 +165,14 @@
             const originalPesan = pesan;
             input.value = '';
             input.style.height = 'auto';
+            input.blur();
 
             const btnImg = document.getElementById('btn-img');
             const btnSend = document.getElementById('btn-send');
 
             if(isImage) {
-                // Ganti icon jadi 'X' untuk fungsi Batal
                 btnImg.innerHTML = '<i class="fas fa-times text-red-500 animate-pulse"></i>';
-                btnImg.onclick = () => { location.reload(); }; // Cara paling aman buat reset sistem saat hang
+                btnImg.onclick = () => { location.reload(); };
                 appendMessage('ai', "Inisialisasi Neural Visual... Ketuk icon (X) untuk batal.");
             }
 
@@ -300,79 +187,33 @@
                 const data = await response.json();
 
                 if (data.type === "image") {
-                    // Fitur Delay: Tunggu sebentar agar server stabil
                     setTimeout(() => {
                         appendImage(data.reply);
                         btnImg.innerHTML = '<i class="fas fa-wand-magic-sparkles text-sm"></i>';
-                        btnImg.onclick = () => processAI(true); // Balikin fungsi asli
+                        btnImg.onclick = () => processAI(true);
                     }, 800);
                 } else {
-                    // Teks dengan Animasi Ketik Cepat
                     typeWriter(data.reply);
                 }
 
                 saveToFirestore(originalPesan, data.reply);
 
             } catch (err) {
-                if (err.name === 'AbortError') {
-                    console.log('User membatalkan proses.');
-                } else {
+                if (err.name !== 'AbortError') {
                     appendMessage('ai', "SYSTEM ERROR: Koneksi ke Omni-Core terputus.");
                 }
             } finally {
-                btnImg.innerHTML = '<i class="fas fa-wand-magic-sparkles text-sm"></i>';
-                btnImg.onclick = () => processAI(true);
-            }
-        }
-        
-            // 1. Tampilkan pesan user & Reset Input
-            appendMessage('user', pesan);
-            const originalPesan = pesan; // Backup pesan
-            input.value = ''; // BERSIHKAN BAR INPUT
-            input.style.height = 'auto';
-            input.blur(); // Tutup keyboard di HP
-
-            const btnImg = document.getElementById('btn-img');
-            const btnSend = document.getElementById('btn-send');
-
-            if(isImage) {
-                btnImg.innerHTML = '<i class="fas fa-circle-notch animate-spin"></i>';
-                appendMessage('ai', "Menganalisa data visual... Harap tunggu.");
-            }
-
-            try {
-                const response = await fetch("/api/chat", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ pesan: originalPesan, isImage, history: historyChat })
-                });
-
-                const data = await response.json();
-
-                if (data.type === "image") {
-                // Sesudah data diterima, jangan langsung tempel, tapi kasih nafas dulu
-                  setTimeout(() => {
-                  appendImage(data.reply);
-                   }, 500);
+                if(!isImage) {
+                    btnImg.innerHTML = '<i class="fas fa-wand-magic-sparkles text-sm"></i>';
+                    btnImg.onclick = () => processAI(true);
                 }
-                
-                } else {
-                    appendMessage('ai', data.reply);
-                }
-
-                saveToFirestore(originalPesan, data.reply);
-
-            } catch (err) {
-                appendMessage('ai', "SYSTEM ERROR: Koneksi ke Omni-Core terputus.");
-            } finally {
-                btnImg.innerHTML = '<i class="fas fa-wand-magic-sparkles text-sm"></i>';
             }
         }
 
         function appendMessage(sender, text) {
             const container = document.getElementById('chat-container');
             const wrap = document.createElement('div');
-            wrap.className = `flex ${sender === 'user' ? 'justify-end' : 'justify-start'} message-in`;
+            wrap.className = `flex ${sender === 'user' ? 'justify-end' : 'justify-start'} message-in mb-4`;
             
             const inner = document.createElement('div');
             inner.className = sender === 'user' 
@@ -384,27 +225,52 @@
             container.appendChild(wrap);
             container.scrollTop = container.scrollHeight;
 
-            if (sender !== 'user') {
-                historyChat.push({ role: 'assistant', content: text });
-            } else {
-                historyChat.push({ role: 'user', content: text });
+            if (sender === 'user') historyChat.push({ role: 'user', content: text });
+        }
+
+        function typeWriter(text) {
+            const container = document.getElementById('chat-container');
+            const wrap = document.createElement('div');
+            wrap.className = `flex justify-start message-in mb-4`;
+            const inner = document.createElement('div');
+            inner.className = "bg-[#111] border border-white/5 text-slate-300 px-5 py-3 rounded-3xl rounded-tl-none max-w-[85%] text-sm leading-relaxed shadow-lg";
+            wrap.appendChild(inner);
+            container.appendChild(wrap);
+            
+            let i = 0;
+            function typing() {
+                if (i < text.length) {
+                    inner.innerText += text.charAt(i);
+                    i++;
+                    container.scrollTop = container.scrollHeight;
+                    setTimeout(typing, 15);
+                }
             }
+            typing();
+            historyChat.push({ role: 'assistant', content: text });
         }
 
         function appendImage(url) {
             const container = document.getElementById('chat-container');
             const wrap = document.createElement('div');
-            wrap.className = "flex justify-start message-in";
+            wrap.className = "flex justify-start message-in mb-4";
             wrap.innerHTML = `
-                <div class="bg-[#111] p-2 rounded-3xl border border-white/5 shadow-2xl max-w-[300px]">
-                    <img src="${url}" class="rounded-2xl w-full h-auto mb-2 border border-white/5" alt="Neural Render">
-                    <p class="text-[7px] text-slate-600 font-mono text-center uppercase tracking-widest">Render Output: Complete</p>
+                <div class="bg-[#111] p-2 rounded-3xl border border-white/5 shadow-2xl max-w-[300px] relative overflow-hidden">
+                    <div class="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-10">
+                        <i class="fas fa-sync animate-spin text-blue-500"></i>
+                    </div>
+                    <img src="${url}" 
+                         class="rounded-2xl w-full h-auto mb-2 border border-white/10 opacity-0 transition-opacity duration-1000" 
+                         onload="this.previousElementSibling.remove(); this.classList.remove('opacity-0')"
+                         onerror="this.src='https://via.placeholder.com/300?text=Render+Error'">
+                    <p class="text-[7px] text-slate-600 font-mono text-center uppercase tracking-widest">Render Output: Verified</p>
                 </div>
             `;
             container.appendChild(wrap);
             container.scrollTop = container.scrollHeight;
         }
 
+        // --- DATA PERSISTENCE ---
         async function saveToFirestore(u, a) {
             if (!currentChatId) currentChatId = "session_" + Date.now();
             const uid = auth.currentUser.uid;
@@ -434,7 +300,11 @@
             const snapshot = await db.collection('chats').doc(auth.currentUser.uid).collection('sessions').doc(id).collection('messages').orderBy('time').get();
             snapshot.forEach(doc => {
                 appendMessage('user', doc.data().user);
-                appendMessage('ai', doc.data().ai);
+                if(doc.data().ai.startsWith('http')) {
+                    appendImage(doc.data().ai);
+                } else {
+                    appendMessage('ai', doc.data().ai);
+                }
             });
         }
     </script>
