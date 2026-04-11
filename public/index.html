@@ -3,49 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RHF-AI | Omni Core</title>
+    <title>RHF-AI | Omni Core v3.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono&display=swap" rel="stylesheet">
+
     <style>
-        body { background: #000; color: #e2e8f0; font-family: 'Inter', sans-serif; overflow: hidden; }
-        .glass { background: rgba(10, 10, 10, 0.8); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .sidebar { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); width: 280px; z-index: 100; }
+        :root { --accent: #3b82f6; --bg: #000000; --glass: rgba(10, 10, 10, 0.8); }
+        body { background: var(--bg); color: #e2e8f0; font-family: 'Inter', sans-serif; overflow: hidden; }
+        
+        /* UI Components */
+        .glass { background: var(--glass); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .sidebar { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); width: 280px; z-index: 100; }
         .sidebar.closed { transform: translateX(-100%); }
         .chat-container::-webkit-scrollbar { width: 0px; }
-        .message-in { animation: fadeInUp 0.3s ease forwards; }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        #overlay { background: rgba(0,0,0,0.6); transition: opacity 0.3s ease; }
-        textarea { max-height: 150px; }
+        
+        /* Animations */
+        .message-in { animation: fadeInUp 0.4s ease forwards; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* AI Code Block Style */
+        .code-font { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; }
+        #overlay { background: rgba(0,0,0,0.7); transition: opacity 0.3s ease; }
+        
+        .shimmer {
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite;
+        }
+        @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
     </style>
 </head>
 <body>
 
     <div id="login-screen" class="fixed inset-0 bg-black z-[200] flex items-center justify-center p-6">
         <div class="text-center w-full max-w-xs">
-            <div class="mb-8 relative">
-                <div class="absolute inset-0 bg-blue-600 blur-3xl opacity-20"></div>
+            <div class="mb-8 relative inline-block">
+                <div class="absolute inset-0 bg-blue-600 blur-3xl opacity-30 animate-pulse"></div>
                 <img src="https://i.postimg.cc/4xr9PgN1/file-00000000aa9471fabbcb615488cb4b8a.png" class="w-24 h-24 mx-auto rounded-3xl relative z-10 border border-white/10 shadow-2xl">
             </div>
-            <h1 class="text-3xl font-black tracking-tighter text-white mb-2">RHF-AI</h1>
-            <p class="text-[9px] text-slate-500 uppercase tracking-[0.5em] mb-12">Neural Identity System</p>
-            <button onclick="loginGoogle()" class="w-full bg-white text-black font-bold py-4 rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition-all shadow-xl">
+            <h1 class="text-4xl font-black tracking-tighter text-white mb-2">RHF-AI</h1>
+            <p class="text-[9px] text-slate-500 uppercase tracking-[0.6em] mb-12">Omni-Core Architecture</p>
+            <button onclick="loginGoogle()" class="w-full bg-white text-black font-bold py-4 rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition-all shadow-xl hover:bg-slate-200">
                 <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5"> AUTHENTICATE
             </button>
         </div>
     </div>
 
     <div id="main-app" class="hidden flex h-screen w-full relative">
+        
         <div id="sidebar" class="sidebar fixed inset-y-0 left-0 bg-[#050505] border-r border-white/5 flex flex-col closed">
             <div class="p-6 flex justify-between items-center border-b border-white/5">
-                <span class="text-[10px] font-black tracking-widest text-blue-500 uppercase">Archive</span>
-                <button onclick="toggleSidebar()" class="text-slate-500"><i class="fas fa-times"></i></button>
+                <span class="text-[10px] font-black tracking-widest text-blue-500 uppercase">Neural Archive</span>
+                <button onclick="toggleSidebar()" class="text-slate-500 hover:text-white transition-colors"><i class="fas fa-times"></i></button>
             </div>
             <div id="chat-list" class="flex-1 overflow-y-auto p-4 space-y-2"></div>
-            <div class="p-6 border-t border-white/5">
-                <button onclick="logout()" class="text-[10px] font-bold text-red-500 uppercase">Shutdown System</button>
+            <div class="p-6 border-t border-white/5 bg-[#030303]">
+                <button onclick="logout()" class="w-full py-3 text-[10px] font-bold text-red-500 uppercase border border-red-500/20 rounded-xl hover:bg-red-500/10 transition-all">Terminate Link</button>
             </div>
         </div>
 
@@ -53,50 +70,54 @@
 
         <div class="flex-1 flex flex-col min-w-0 bg-[#000]">
             <header class="h-16 flex items-center px-4 justify-between glass sticky top-0 z-10">
-                <button onclick="toggleSidebar()" class="w-10 h-10 flex items-center justify-center text-slate-300">
+                <button onclick="toggleSidebar()" class="w-10 h-10 flex items-center justify-center text-slate-300 hover:bg-white/5 rounded-full transition-all">
                     <i class="fas fa-bars-staggered"></i>
                 </button>
                 <div class="flex flex-col items-center">
-                    <span class="text-[10px] font-black tracking-[0.3em] text-white uppercase">Omni-Core</span>
-                    <span id="status-link" class="text-[7px] text-blue-500 font-mono tracking-widest">NEURAL LINK ACTIVE</span>
+                    <span class="text-[11px] font-black tracking-[0.4em] text-white uppercase">Omni-Core</span>
+                    <div class="flex items-center gap-2">
+                        <span class="w-1 h-1 bg-blue-500 rounded-full animate-ping"></span>
+                        <span id="status-link" class="text-[7px] text-blue-500 font-mono tracking-widest uppercase">Direct Neural Link Active</span>
+                    </div>
                 </div>
-                <button onclick="newChat()" class="w-10 h-10 flex items-center justify-center text-blue-500">
+                <button onclick="newChat()" class="w-10 h-10 flex items-center justify-center text-blue-500 hover:bg-blue-500/10 rounded-full transition-all">
                     <i class="fas fa-plus-circle text-xl"></i>
                 </button>
             </header>
 
-            <div id="chat-container" class="flex-1 overflow-y-auto p-4 lg:p-8 space-y-6 chat-container">
-                <div class="h-full flex items-center justify-center opacity-10">
-                    <img src="https://uptight-emerald-6gmwz673ag.edgeone.app/file_00000000aa9471fabbcb615488cb4b8a.png" class="w-32 h-32">
+            <div id="chat-container" class="flex-1 overflow-y-auto p-4 lg:p-10 space-y-8 chat-container">
+                <div class="h-full flex flex-col items-center justify-center opacity-10 space-y-4">
+                    <img src="https://uptight-emerald-6gmwz673ag.edgeone.app/file_00000000aa9471fabbcb615488cb4b8a.png" class="w-32 h-32 grayscale">
+                    <p class="text-xs font-mono tracking-[0.5em] text-white uppercase">Waiting for Command...</p>
                 </div>
             </div>
 
-            <div class="p-4 bg-gradient-to-t from-black via-black/90 to-transparent">
+            <div class="p-4 bg-gradient-to-t from-black via-black/95 to-transparent">
                 <div class="max-w-4xl mx-auto">
-                    <div class="bg-[#111] border border-white/5 rounded-3xl p-2 flex items-end gap-2 shadow-2xl focus-within:border-blue-500/50 transition-all">
-                        <textarea id="user-input" rows="1" placeholder="Type command..." class="flex-1 bg-transparent border-none p-3 focus:ring-0 outline-none text-sm text-slate-200 resize-none" oninput="autoResize(this)"></textarea>
+                    <div class="bg-[#0a0a0a] border border-white/5 rounded-[2rem] p-2 flex items-end gap-2 shadow-2xl focus-within:border-blue-500/30 transition-all">
+                        <textarea id="user-input" rows="1" placeholder="Enter instructions for Omni-Core..." class="flex-1 bg-transparent border-none p-4 focus:ring-0 outline-none text-sm text-slate-200 resize-none overflow-hidden" oninput="autoResize(this)"></textarea>
+                        
                         <div class="flex gap-2 p-1">
-                            <button onclick="processAI(true)" id="btn-img" class="w-11 h-11 rounded-2xl bg-[#1a1a1a] text-blue-400 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all active:scale-90">
+                            <button onclick="processAI(true)" id="btn-img" class="w-12 h-12 rounded-full bg-[#111] text-blue-400 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all active:scale-90 shadow-inner">
                                 <i class="fas fa-wand-magic-sparkles text-sm"></i>
                             </button>
-                            <button onclick="processAI(false)" id="btn-send" class="w-11 h-11 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-600/20 active:scale-90 transition-all">
+                            <button onclick="processAI(false)" id="btn-send" class="w-12 h-12 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-600/30 active:scale-90 transition-all hover:bg-blue-500">
                                 <i class="fas fa-paper-plane text-xs"></i>
                             </button>
                         </div>
                     </div>
-                    <p class="text-[7px] text-center text-slate-600 mt-3 tracking-[0.2em] uppercase">RHF-AI Infrastructure v3.0</p>
+                    <p class="text-[7px] text-center text-slate-600 mt-4 tracking-[0.3em] uppercase font-bold">Encrypted Protocol v3.0 | End-to-End Neural Processing</p>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // --- INITIAL STATE ---
+        // --- CORE CONFIG ---
         let currentAbortController = null;
         let historyChat = [];
         let currentChatId = null;
 
-        // --- FIREBASE CONFIG ---
         const firebaseConfig = {
             apiKey: "AIzaSyDNFXLa8WGAqhLnc8RrLLTgP3nLWvXkd1w",
             authDomain: "rhf-confrims.firebaseapp.com",
@@ -121,6 +142,7 @@
                 loadChatList();
             } else {
                 document.getElementById('login-screen').classList.remove('hidden');
+                document.getElementById('main-app').classList.add('hidden');
             }
         });
         function logout() { auth.signOut().then(() => location.reload()); }
@@ -148,11 +170,15 @@
         function newChat() {
             currentChatId = null;
             historyChat = [];
-            document.getElementById('chat-container').innerHTML = '';
+            document.getElementById('chat-container').innerHTML = `
+                <div class="h-full flex flex-col items-center justify-center opacity-10 space-y-4">
+                    <img src="https://uptight-emerald-6gmwz673ag.edgeone.app/file_00000000aa9471fabbcb615488cb4b8a.png" class="w-32 h-32 grayscale">
+                    <p class="text-xs font-mono tracking-[0.5em] text-white uppercase">Waiting for Command...</p>
+                </div>`;
             if(window.innerWidth < 1024 && !document.getElementById('sidebar').classList.contains('closed')) toggleSidebar();
         }
 
-        // --- CORE AI LOGIC ---
+        // --- CORE PROCESSING ---
         async function processAI(isImage) {
             const input = document.getElementById('user-input');
             const pesan = input.value.trim();
@@ -160,6 +186,9 @@
 
             if (currentAbortController) currentAbortController.abort();
             currentAbortController = new AbortController();
+
+            // Clear welcome screen on first message
+            if (historyChat.length === 0) document.getElementById('chat-container').innerHTML = '';
 
             appendMessage('user', pesan);
             const originalPesan = pesan;
@@ -171,9 +200,8 @@
             const btnSend = document.getElementById('btn-send');
 
             if(isImage) {
-                btnImg.innerHTML = '<i class="fas fa-times text-red-500 animate-pulse"></i>';
-                btnImg.onclick = () => { location.reload(); };
-                appendMessage('ai', "Inisialisasi Neural Visual... Ketuk icon (X) untuk batal.");
+                btnImg.innerHTML = '<i class="fas fa-circle-notch animate-spin"></i>';
+                appendMessage('ai', "Memproses visualisasi... Harap tunggu.");
             }
 
             try {
@@ -190,7 +218,6 @@
                     setTimeout(() => {
                         appendImage(data.reply);
                         btnImg.innerHTML = '<i class="fas fa-wand-magic-sparkles text-sm"></i>';
-                        btnImg.onclick = () => processAI(true);
                     }, 800);
                 } else {
                     typeWriter(data.reply);
@@ -200,12 +227,11 @@
 
             } catch (err) {
                 if (err.name !== 'AbortError') {
-                    appendMessage('ai', "SYSTEM ERROR: Koneksi ke Omni-Core terputus.");
+                    appendMessage('ai', "SYSTEM ERROR: Hubungan dengan Omni-Core terputus.");
                 }
             } finally {
                 if(!isImage) {
                     btnImg.innerHTML = '<i class="fas fa-wand-magic-sparkles text-sm"></i>';
-                    btnImg.onclick = () => processAI(true);
                 }
             }
         }
@@ -213,17 +239,17 @@
         function appendMessage(sender, text) {
             const container = document.getElementById('chat-container');
             const wrap = document.createElement('div');
-            wrap.className = `flex ${sender === 'user' ? 'justify-end' : 'justify-start'} message-in mb-4`;
+            wrap.className = `flex ${sender === 'user' ? 'justify-end' : 'justify-start'} message-in mb-6`;
             
             const inner = document.createElement('div');
             inner.className = sender === 'user' 
-                ? "bg-blue-600 text-white px-5 py-3 rounded-3xl rounded-tr-none max-w-[85%] text-sm shadow-xl"
-                : "bg-[#111] border border-white/5 text-slate-300 px-5 py-3 rounded-3xl rounded-tl-none max-w-[85%] text-sm leading-relaxed shadow-lg";
+                ? "bg-blue-600 text-white px-6 py-3 rounded-[2rem] rounded-tr-none max-w-[85%] text-[13px] shadow-xl font-medium"
+                : "bg-[#0a0a0a] border border-white/10 text-slate-300 px-6 py-4 rounded-[2rem] rounded-tl-none max-w-[90%] text-[13px] leading-relaxed shadow-2xl";
             
             inner.innerText = text;
             wrap.appendChild(inner);
             container.appendChild(wrap);
-            container.scrollTop = container.scrollHeight;
+            container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
 
             if (sender === 'user') historyChat.push({ role: 'user', content: text });
         }
@@ -231,9 +257,15 @@
         function typeWriter(text) {
             const container = document.getElementById('chat-container');
             const wrap = document.createElement('div');
-            wrap.className = `flex justify-start message-in mb-4`;
+            wrap.className = `flex justify-start message-in mb-6`;
             const inner = document.createElement('div');
-            inner.className = "bg-[#111] border border-white/5 text-slate-300 px-5 py-3 rounded-3xl rounded-tl-none max-w-[85%] text-sm leading-relaxed shadow-lg";
+            inner.className = "bg-[#0a0a0a] border border-white/10 text-slate-300 px-6 py-4 rounded-[2rem] rounded-tl-none max-w-[90%] text-[13px] leading-relaxed shadow-2xl whitespace-pre-wrap";
+            
+            // Check if it's code
+            if (text.includes('```') || text.includes('const') || text.includes('function')) {
+                inner.classList.add('code-font');
+            }
+
             wrap.appendChild(inner);
             container.appendChild(wrap);
             
@@ -243,7 +275,7 @@
                     inner.innerText += text.charAt(i);
                     i++;
                     container.scrollTop = container.scrollHeight;
-                    setTimeout(typing, 15);
+                    setTimeout(typing, 8); // Ultra fast speed for "Claude" feel
                 }
             }
             typing();
@@ -253,41 +285,48 @@
         function appendImage(url) {
             const container = document.getElementById('chat-container');
             const wrap = document.createElement('div');
-            wrap.className = "flex justify-start message-in mb-4";
+            wrap.className = "flex justify-start message-in mb-6";
             wrap.innerHTML = `
-                <div class="bg-[#111] p-2 rounded-3xl border border-white/5 shadow-2xl max-w-[300px] relative overflow-hidden">
-                    <div class="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-10">
+                <div class="bg-[#0a0a0a] p-2.5 rounded-[2rem] border border-white/10 shadow-2xl max-w-[320px] relative overflow-hidden">
+                    <div class="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-md z-10">
                         <i class="fas fa-sync animate-spin text-blue-500"></i>
                     </div>
                     <img src="${url}" 
-                         class="rounded-2xl w-full h-auto mb-2 border border-white/10 opacity-0 transition-opacity duration-1000" 
+                         class="rounded-[1.5rem] w-full h-auto mb-2 border border-white/5 opacity-0 transition-opacity duration-1000" 
                          onload="this.previousElementSibling.remove(); this.classList.remove('opacity-0')"
-                         onerror="this.src='https://via.placeholder.com/300?text=Render+Error'">
-                    <p class="text-[7px] text-slate-600 font-mono text-center uppercase tracking-widest">Render Output: Verified</p>
+                         onerror="this.src='[https://via.placeholder.com/512?text=Neural+Render+Error](https://via.placeholder.com/512?text=Neural+Render+Error)'">
+                    <p class="text-[7px] text-slate-600 font-mono text-center uppercase tracking-[0.3em] font-bold">Verified Neural Output</p>
                 </div>
             `;
             container.appendChild(wrap);
-            container.scrollTop = container.scrollHeight;
+            container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
         }
 
-        // --- DATA PERSISTENCE ---
+        // --- DATABASE OPS ---
         async function saveToFirestore(u, a) {
             if (!currentChatId) currentChatId = "session_" + Date.now();
             const uid = auth.currentUser.uid;
             const docRef = db.collection('chats').doc(uid).collection('sessions').doc(currentChatId);
-            await docRef.set({ lastUpdated: firebase.firestore.FieldValue.serverTimestamp(), title: u.substring(0, 30) }, { merge: true });
-            await docRef.collection('messages').add({ user: u, ai: a, time: firebase.firestore.FieldValue.serverTimestamp() });
+            await docRef.set({ 
+                lastUpdated: firebase.firestore.FieldValue.serverTimestamp(), 
+                title: u.substring(0, 35) + (u.length > 35 ? '...' : '') 
+            }, { merge: true });
+            await docRef.collection('messages').add({ 
+                user: u, 
+                ai: a, 
+                time: firebase.firestore.FieldValue.serverTimestamp() 
+            });
             loadChatList();
         }
 
         async function loadChatList() {
             const list = document.getElementById('chat-list');
-            const snapshot = await db.collection('chats').doc(auth.currentUser.uid).collection('sessions').orderBy('lastUpdated', 'desc').limit(15).get();
+            const snapshot = await db.collection('chats').doc(auth.currentUser.uid).collection('sessions').orderBy('lastUpdated', 'desc').limit(20).get();
             list.innerHTML = '';
             snapshot.forEach(doc => {
                 const btn = document.createElement('button');
-                btn.className = "w-full text-left p-4 hover:bg-white/5 rounded-2xl text-[10px] truncate text-slate-500 hover:text-blue-400 transition-all mb-1 border border-transparent hover:border-white/5";
-                btn.innerHTML = `<i class="far fa-comment-alt mr-3 opacity-30"></i> ${doc.data().title}`;
+                btn.className = "w-full text-left p-4 hover:bg-white/5 rounded-2xl text-[11px] truncate text-slate-400 hover:text-blue-400 transition-all mb-1 border border-transparent hover:border-white/5 flex items-center gap-3";
+                btn.innerHTML = `<i class="far fa-message opacity-30"></i> <span>${doc.data().title}</span>`;
                 btn.onclick = () => { loadMessages(doc.id); toggleSidebar(); };
                 list.appendChild(btn);
             });
