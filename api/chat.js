@@ -9,35 +9,37 @@ export default async function handler(req, res) {
     const { pesan, isImage, history } = req.body;
     const apiKey = process.env.GEMINI_API_KEY;
 
+    // --- JALUR VISUAL (POLLINATIONS FLUX) ---
     if (isImage === true || isImage === "true") {
       const seed = Math.floor(Math.random() * 1000000000);
       const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(pesan)}?width=1024&height=1024&nologo=true&seed=${seed}&model=flux`;
       return res.status(200).json({ type: "image", reply: imageUrl });
     }
 
+    // --- JALUR OTAK (GEMINI 1.5 FLASH) ---
+    // Pastikan history dibersihkan agar tidak ada karakter aneh
     const cleanHistory = (history || [])
-      .filter(item => item.content && item.content.trim() !== "")
+      .filter(item => item.content && typeof item.content === 'string' && !item.content.includes('pollinations.ai'))
       .map(item => ({
         role: item.role === 'user' ? 'user' : 'model',
-        parts: [{ text: item.content }]
+        parts: [{ text: item.content.trim() }]
       }))
-      .slice(-10);
+      .slice(-6);
 
-    // KUNCI PERBAIKAN: Gunakan v1beta dan tambahkan -latest pada model
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         contents: [
-          { role: "user", parts: [{ text: "Kamu adalah RHF-AI Omni-Core v3.0, asisten cerdas ciptaan Radit Tiya. Kamu ahli dalam coding, engineering, dan modding. Jawablah dengan sangat teliti, rapi, dan teknis." }] },
-          { role: "model", parts: [{ text: "Siap, Radit Tiya. Sistem Omni-Core v3.0 Aktif." }] },
+          { role: "user", parts: [{ text: "Kamu adalah RHF-AI Omni-Core v3.0, AI asisten teknis ciptaan Radit Tiya. Kamu sangat teliti dalam coding, modding, dan engineering. Selalu panggil user dengan sebutan Radit." }] },
+          { role: "model", parts: [{ text: "Sistem Aktif. Menunggu perintah dari Radit Tiya." }] },
           ...cleanHistory,
           { role: "user", parts: [{ text: pesan }] }
         ],
         generationConfig: { 
-          temperature: 0.7, 
-          topP: 0.95,
-          maxOutputTokens: 4096 
+          temperature: 0.8, 
+          maxOutputTokens: 2048,
+          topP: 0.95
         }
       })
     });
@@ -47,16 +49,13 @@ export default async function handler(req, res) {
     if (data.candidates && data.candidates[0].content) {
       const text = data.candidates[0].content.parts[0].text;
       return res.status(200).json({ type: "text", reply: text });
-    } else if (data.error) {
-      return res.status(200).json({ 
-        type: "text", 
-        reply: `SYSTEM ERROR [${data.error.status}]: ${data.error.message}` 
-      });
     } else {
-      return res.status(200).json({ type: "text", reply: "Neural Link Limit tercapai. Coba lagi, Dit!" });
+      // Menangkap error spesifik dari Google
+      const msg = data.error ? data.error.message : "Neural Link Busy";
+      return res.status(200).json({ type: "text", reply: `Sistem Error: ${msg}` });
     }
 
   } catch (err) {
-    return res.status(200).json({ type: "text", reply: "Sistem Offline. Cek koneksi atau Key kamu." });
+    return res.status(200).json({ type: "text", reply: "Backend Offline. Cek API Key di Vercel!" });
   }
 }
