@@ -6,22 +6,34 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   
   try {
-    const { pesan, isImage } = req.body;
+    const { pesan, isImage, history } = req.body;
+    const apiKey = process.env.GEMINI_API_KEY;
 
-    // JALUR GAMBAR (Pantesan Gila Hasilnya!)
+    // --- JALUR VISUAL (SUPER CEPAT) ---
     if (isImage === true || isImage === "true") {
       const seed = Math.floor(Math.random() * 1000000000);
       const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(pesan)}?width=1024&height=1024&nologo=true&seed=${seed}&model=flux`;
       return res.status(200).json({ type: "image", reply: imageUrl });
     }
 
-    // JALUR CHAT GEMINI
-    const apiKey = process.env.GEMINI_API_KEY;
+    // --- JALUR OTAK (BIAR NYAMBUNG & TELITI) ---
+    // Kita susun history agar Gemini ingat instruksi awal kamu
+    const formattedHistory = (history || []).map(item => ({
+      role: item.role === 'user' ? 'user' : 'model',
+      parts: [{ text: item.content }]
+    }));
+
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: pesan }] }]
+        contents: [
+          { role: "user", parts: [{ text: "Kamu adalah RHF-AI Omni-Core v3.0, ahli coding dan modding. Jawab dengan sangat teliti dan teknis." }] },
+          { role: "model", parts: [{ text: "Siap, Radit. Sistem aktif. Apa tugas saya?" }] },
+          ...formattedHistory,
+          { role: "user", parts: [{ text: pesan }] }
+        ],
+        generationConfig: { temperature: 0.7, topP: 0.95 }
       })
     });
 
@@ -31,10 +43,11 @@ export default async function handler(req, res) {
       const text = data.candidates[0].content.parts[0].text;
       return res.status(200).json({ type: "text", reply: text });
     } else {
-      return res.status(200).json({ type: "text", reply: "Gemini lagi overload, Dit. Coba sedetik lagi!" });
+      // Jika error dari Google, kita kasih info teknis biar tahu salahnya dimana
+      return res.status(200).json({ type: "text", reply: "Neural Link Limit tercapai atau Key salah. Cek Vercel Logs, Dit!" });
     }
 
   } catch (err) {
-    return res.status(200).json({ type: "text", reply: "Backend konek, tapi ada masalah di pengolahan data. Cek API Key Vercel!" });
+    return res.status(200).json({ type: "text", reply: "Sistem Offline. Coba cek koneksi internet atau API Key kamu." });
   }
 }
