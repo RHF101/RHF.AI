@@ -2,6 +2,7 @@
   "name": "rhf-ai-omni-core",
   "version": "3.0.0",
   "description": "Neural Interface by Radit Tiya",
+  "type": "module",
   "main": "api/chat.js",
   "dependencies": {
     "node-fetch": "^3.3.0"
