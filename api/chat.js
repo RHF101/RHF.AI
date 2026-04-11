@@ -14,7 +14,7 @@ export default async function handler(req, res) {
 
     // AMBIL TOKEN DARI VERCEL SETTINGS
     const GROQ_KEY = process.env.GROQ_API_KEY;
-    const HF_TOKEN = process.env.HF_TOKEN;
+    const HF_TOKEN = "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";
 
     // --- LOGIKA JIKA USER MINTA GAMBAR ---
     if (isImage) {
