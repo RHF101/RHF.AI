@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RHF-AI | Omni Core v3.0</title>
+    <title>RHF-AI | Omni-Core v3.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
@@ -20,8 +20,8 @@
         .chat-container::-webkit-scrollbar { width: 0px; }
         .message-in { animation: fadeInUp 0.4s ease forwards; }
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
-        .code-font { font-family: 'JetBrains Mono', monospace; }
-        #overlay { background: rgba(0,0,0,0.7); display: none; }
+        #overlay { background: rgba(0,0,0,0.7); display: none; position: fixed; inset: 0; z-index: 90; }
+        .code-block { font-family: 'JetBrains Mono', monospace; background: #050505; border: 1px solid rgba(255,255,255,0.1); padding: 1rem; border-radius: 1rem; margin-top: 0.5rem; overflow-x: auto; }
     </style>
 </head>
 <body>
@@ -29,10 +29,10 @@
     <div id="login-screen" class="fixed inset-0 bg-black z-[200] flex items-center justify-center p-6">
         <div class="text-center w-full max-w-xs">
             <img src="https://i.postimg.cc/4xr9PgN1/file-00000000aa9471fabbcb615488cb4b8a.png" class="w-24 h-24 mx-auto rounded-3xl mb-6 border border-white/10 shadow-2xl">
-            <h1 class="text-3xl font-black text-white mb-2 tracking-tighter">RHF-AI</h1>
-            <p class="text-[8px] text-slate-500 uppercase tracking-[0.5em] mb-10">Omni-Core Architecture</p>
-            <button onclick="loginGoogle()" class="w-full bg-white text-black font-bold py-4 rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition-all">
-                AUTHENTICATE
+            <h1 class="text-3xl font-black text-white mb-2 tracking-tighter italic">RHF-AI</h1>
+            <p class="text-[8px] text-slate-500 uppercase tracking-[0.5em] mb-10">Neural Interface v3.0</p>
+            <button onclick="loginGoogle()" class="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition-all shadow-lg shadow-blue-600/20">
+                <i class="fab fa-google"></i> AUTHENTICATE
             </button>
         </div>
     </div>
@@ -40,40 +40,58 @@
     <div id="main-app" class="hidden flex h-screen w-full relative">
         <div id="sidebar" class="sidebar fixed inset-y-0 left-0 bg-[#050505] border-r border-white/5 flex flex-col">
             <div class="p-6 flex justify-between items-center border-b border-white/5">
-                <span class="text-[10px] font-black text-blue-500 uppercase">Archive</span>
-                <button onclick="toggleSidebar()"><i class="fas fa-times"></i></button>
+                <span class="text-[10px] font-black text-blue-500 uppercase tracking-widest">Neural Archive</span>
+                <button onclick="toggleSidebar()" class="text-slate-500"><i class="fas fa-times"></i></button>
             </div>
-            <div id="chat-list" class="flex-1 overflow-y-auto p-4 space-y-2"></div>
-            <div class="p-6 bg-[#030303]">
-                <button onclick="logout()" class="w-full py-3 text-[10px] font-bold text-red-500 border border-red-500/20 rounded-xl">TERMINATE</button>
+            <div id="chat-list" class="flex-1 overflow-y-auto p-4 space-y-2">
+                </div>
+            <div class="p-6 bg-[#030303] border-t border-white/5">
+                <button onclick="logout()" class="w-full py-3 text-[10px] font-bold text-red-500 border border-red-500/20 rounded-xl hover:bg-red-500/5 transition-all uppercase">Terminate Link</button>
             </div>
         </div>
 
-        <div id="overlay" onclick="toggleSidebar()" class="fixed inset-0 z-[90]"></div>
+        <div id="overlay" onclick="toggleSidebar()"></div>
 
         <div class="flex-1 flex flex-col min-w-0 bg-[#000]">
             <header class="h-16 flex items-center px-4 justify-between glass sticky top-0 z-10">
-                <button onclick="toggleSidebar()" class="w-10 h-10 text-slate-300"><i class="fas fa-bars-staggered"></i></button>
-                <span class="text-[10px] font-black tracking-[0.4em] text-white uppercase">Omni-Core v3.0</span>
-                <button onclick="newChat()" class="w-10 h-10 text-blue-500"><i class="fas fa-plus-circle text-xl"></i></button>
+                <button onclick="toggleSidebar()" class="w-10 h-10 flex items-center justify-center text-slate-300 hover:bg-white/5 rounded-full">
+                    <i class="fas fa-bars-staggered"></i>
+                </button>
+                <div class="flex flex-col items-center">
+                    <span class="text-[10px] font-black tracking-[0.3em] text-white uppercase">Omni-Core</span>
+                    <span class="text-[7px] text-blue-500 font-mono">STATUS: ENCRYPTED</span>
+                </div>
+                <button onclick="newChat()" class="w-10 h-10 flex items-center justify-center text-blue-500 hover:bg-blue-500/5 rounded-full">
+                    <i class="fas fa-plus-circle text-xl"></i>
+                </button>
             </header>
 
-            <div id="chat-container" class="flex-1 overflow-y-auto p-4 lg:p-10 space-y-8 chat-container"></div>
+            <div id="chat-container" class="flex-1 overflow-y-auto p-4 lg:p-10 space-y-6 chat-container">
+                <div id="welcome-msg" class="h-full flex flex-col items-center justify-center opacity-20 space-y-4">
+                    <img src="https://i.postimg.cc/4xr9PgN1/file-00000000aa9471fabbcb615488cb4b8a.png" class="w-20 grayscale">
+                    <p class="text-[10px] font-mono tracking-[0.5em] uppercase">Ready for instruction...</p>
+                </div>
+            </div>
 
-            <div class="p-4 bg-black">
-                <div class="max-w-4xl mx-auto flex items-end gap-2 bg-[#0a0a0a] border border-white/5 rounded-[2rem] p-2">
-                    <textarea id="user-input" rows="1" placeholder="Command..." class="flex-1 bg-transparent p-4 outline-none text-sm text-slate-200 resize-none" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
-                    <button onclick="processAI(true)" id="btn-img" class="w-12 h-12 rounded-full text-blue-400"><i class="fas fa-wand-magic-sparkles"></i></button>
-                    <button onclick="processAI(false)" id="btn-send" class="w-12 h-12 rounded-full bg-blue-600 text-white"><i class="fas fa-paper-plane"></i></button>
+            <div class="p-4 bg-gradient-to-t from-black to-transparent">
+                <div class="max-w-4xl mx-auto flex items-end gap-2 bg-[#0a0a0a] border border-white/5 rounded-[2rem] p-2 focus-within:border-blue-500/30 transition-all shadow-2xl">
+                    <textarea id="user-input" rows="1" placeholder="Type a message..." class="flex-1 bg-transparent border-none p-4 focus:ring-0 outline-none text-sm text-slate-200 resize-none overflow-hidden" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+                    
+                    <div class="flex gap-1 p-1">
+                        <button onclick="processAI(true)" id="btn-img" class="w-12 h-12 rounded-full text-blue-400 hover:bg-blue-500/10 transition-all">
+                            <i class="fas fa-wand-magic-sparkles"></i>
+                        </button>
+                        <button onclick="processAI(false)" id="btn-send" class="w-12 h-12 rounded-full bg-blue-600 text-white shadow-lg shadow-blue-600/30 active:scale-90 transition-all">
+                            <i class="fas fa-paper-plane text-xs"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        let historyChat = [];
-        let currentChatId = null;
-
+        // --- CONFIG & INIT ---
         const firebaseConfig = {
             apiKey: "AIzaSyDNFXLa8WGAqhLnc8RrLLTgP3nLWvXkd1w",
             authDomain: "rhf-confrims.firebaseapp.com",
@@ -82,10 +100,15 @@
             messagingSenderId: "631231605918",
             appId: "1:631231605918:web:d42d4e34e9ea14b2d65f8f"
         };
+
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
 
+        let historyChat = [];
+        let currentChatId = null;
+
+        // --- AUTH ---
         function loginGoogle() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
         auth.onAuthStateChanged(user => {
             if (user) {
@@ -95,6 +118,8 @@
             }
         });
         function logout() { auth.signOut().then(() => location.reload()); }
+
+        // --- UI ---
         function toggleSidebar() {
             const sb = document.getElementById('sidebar');
             const ov = document.getElementById('overlay');
@@ -102,22 +127,35 @@
             ov.style.display = sb.classList.contains('open') ? 'block' : 'none';
         }
 
+        function newChat() {
+            currentChatId = null;
+            historyChat = [];
+            document.getElementById('chat-container').innerHTML = '';
+            if(window.innerWidth < 1024) toggleSidebar();
+        }
+
+        // --- CORE ENGINE ---
         async function processAI(isImage) {
             const input = document.getElementById('user-input');
             const pesan = input.value.trim();
             if (!pesan) return;
+
+            // Remove welcome msg
+            const welcome = document.getElementById('welcome-msg');
+            if(welcome) welcome.remove();
 
             appendMessage('user', pesan);
             input.value = '';
             input.style.height = 'auto';
 
             try {
-                // JALUR KRUSIAL: Memanggil API Backend Vercel
                 const response = await fetch("/api/chat", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ pesan, isImage, history: historyChat })
                 });
+
+                if (!response.ok) throw new Error();
 
                 const data = await response.json();
                 if (data.type === "image") {
@@ -125,9 +163,12 @@
                 } else {
                     typeWriter(data.reply);
                 }
+                
+                // Simpan ke Firestore
                 saveToFirestore(pesan, data.reply);
+
             } catch (err) {
-                appendMessage('ai', "SYSTEM ERROR: Hubungan dengan Omni-Core terputus.");
+                appendMessage('ai', "SYSTEM ERROR: Hubungan dengan Omni-Core terputus. Pastikan folder /api/chat.js dan API Key sudah benar.");
             }
         }
 
@@ -135,14 +176,17 @@
             const container = document.getElementById('chat-container');
             const wrap = document.createElement('div');
             wrap.className = `flex ${sender === 'user' ? 'justify-end' : 'justify-start'} message-in mb-4`;
+            
             const inner = document.createElement('div');
             inner.className = sender === 'user' 
-                ? "bg-blue-600 px-4 py-2 rounded-2xl rounded-tr-none text-sm max-w-[80%]" 
-                : "bg-[#0a0a0a] border border-white/10 px-4 py-3 rounded-2xl rounded-tl-none text-sm text-slate-300 max-w-[90%] whitespace-pre-wrap";
+                ? "bg-blue-600 text-white px-5 py-3 rounded-2xl rounded-tr-none text-[13px] max-w-[85%] shadow-xl font-medium" 
+                : "bg-[#0a0a0a] border border-white/10 text-slate-300 px-5 py-4 rounded-2xl rounded-tl-none text-[13px] max-w-[90%] leading-relaxed shadow-2xl whitespace-pre-wrap";
+            
             inner.innerText = text;
             wrap.appendChild(inner);
             container.appendChild(wrap);
-            container.scrollTop = container.scrollHeight;
+            container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+
             if (sender === 'user') historyChat.push({ role: 'user', content: text });
         }
 
@@ -151,11 +195,11 @@
             const wrap = document.createElement('div');
             wrap.className = "flex justify-start message-in mb-4";
             const inner = document.createElement('div');
-            inner.className = "bg-[#0a0a0a] border border-white/10 px-4 py-3 rounded-2xl rounded-tl-none text-sm text-slate-300 max-w-[90%] whitespace-pre-wrap";
-            if (text.includes('```')) inner.classList.add('code-font');
+            inner.className = "bg-[#0a0a0a] border border-white/10 text-slate-300 px-5 py-4 rounded-2xl rounded-tl-none text-[13px] max-w-[90%] leading-relaxed shadow-2xl whitespace-pre-wrap";
+            
             wrap.appendChild(inner);
             container.appendChild(wrap);
-
+            
             let i = 0;
             function typing() {
                 if (i < text.length) {
@@ -173,35 +217,73 @@
             const container = document.getElementById('chat-container');
             const wrap = document.createElement('div');
             wrap.className = "flex justify-start message-in mb-4";
-            wrap.innerHTML = `<div class="bg-[#0a0a0a] p-2 rounded-2xl border border-white/10 max-w-[300px]">
-                <img src="${url}" class="rounded-xl w-full">
+            wrap.innerHTML = `<div class="bg-[#0a0a0a] p-2 rounded-2xl border border-white/10 max-w-[280px] shadow-2xl">
+                <img src="${url}" class="rounded-xl w-full border border-white/5">
+                <p class="text-[8px] text-center mt-2 opacity-30 font-mono tracking-widest uppercase">Neural Render Complete</p>
             </div>`;
             container.appendChild(wrap);
-            container.scrollTop = container.scrollHeight;
+            container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
         }
 
+        // --- DATA OPS ---
         async function saveToFirestore(u, a) {
-            if (!currentChatId) currentChatId = "chat_" + Date.now();
             const uid = auth.currentUser.uid;
-            await db.collection('chats').doc(uid).collection('sessions').doc(currentChatId).set({
-                lastUpdated: firebase.firestore.FieldValue.serverTimestamp(),
-                title: u.substring(0, 30)
-            }, { merge: true });
+            if (!currentChatId) {
+                currentChatId = "session_" + Date.now();
+                await db.collection('chats').doc(uid).collection('sessions').doc(currentChatId).set({
+                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp(),
+                    title: u.substring(0, 35) + (u.length > 35 ? '...' : '')
+                });
+            }
+            
+            await db.collection('chats').doc(uid).collection('sessions').doc(currentChatId).collection('messages').add({
+                user: u,
+                ai: a,
+                time: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            await db.collection('chats').doc(uid).collection('sessions').doc(currentChatId).update({
+                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            loadChatList();
         }
 
         async function loadChatList() {
-            const snapshot = await db.collection('chats').doc(auth.currentUser.uid).collection('sessions').limit(10).get();
             const list = document.getElementById('chat-list');
+            const uid = auth.currentUser.uid;
+            const snapshot = await db.collection('chats').doc(uid).collection('sessions').orderBy('lastUpdated', 'desc').get();
+            
             list.innerHTML = '';
             snapshot.forEach(doc => {
                 const btn = document.createElement('button');
-                btn.className = "w-full text-left p-3 hover:bg-white/5 rounded-xl text-[10px] text-slate-400 truncate";
-                btn.innerText = doc.data().title;
+                btn.className = "w-full text-left p-4 hover:bg-white/5 rounded-2xl text-[11px] text-slate-400 truncate mb-1 border border-transparent hover:border-white/10 transition-all flex items-center gap-3";
+                btn.innerHTML = `<i class="far fa-comment-alt opacity-30"></i> <span>${doc.data().title || 'New Session'}</span>`;
+                btn.onclick = () => loadMessages(doc.id);
                 list.appendChild(btn);
             });
         }
 
-        function newChat() { location.reload(); }
+        async function loadMessages(id) {
+            currentChatId = id;
+            const container = document.getElementById('chat-container');
+            container.innerHTML = '<p class="text-center text-[9px] opacity-20 tracking-widest uppercase py-10">Accessing Neural Archive...</p>';
+            historyChat = [];
+            if(window.innerWidth < 1024) toggleSidebar();
+
+            const uid = auth.currentUser.uid;
+            const snapshot = await db.collection('chats').doc(uid).collection('sessions').doc(id).collection('messages').orderBy('time').get();
+            
+            container.innerHTML = '';
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                appendMessage('user', data.user);
+                if (data.ai.startsWith('http')) {
+                    appendImage(data.ai);
+                } else {
+                    appendMessage('ai', data.ai);
+                }
+            });
+        }
     </script>
 </body>
 </html>
