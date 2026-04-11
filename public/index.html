@@ -94,6 +94,27 @@
     </div>
 
     <script>
+        function appendImage(url) {
+    const container = document.getElementById('chat-container');
+    const wrap = document.createElement('div');
+    wrap.className = "flex justify-start message-in mb-4";
+    
+    // Kita tambahkan penanganan error jika gambar gagal dimuat
+    wrap.innerHTML = `
+        <div class="bg-[#111] p-2 rounded-3xl border border-white/5 shadow-2xl max-w-[300px]">
+            <img src="${url}" 
+                 class="rounded-2xl w-full h-auto mb-2 border border-white/10" 
+                 alt="Neural Render"
+                 onload="console.log('Image Loaded Success')"
+                 onerror="this.src='https://via.placeholder.com/300?text=Render+Ulang+Dit'">
+            <p class="text-[7px] text-slate-600 font-mono text-center uppercase tracking-widest">Render Output: Verified</p>
+        </div>
+    `;
+    
+    container.appendChild(wrap);
+    container.scrollTop = container.scrollHeight;
+        }
+        
         // --- FIREBASE CONFIG ---
         const firebaseConfig = {
             apiKey: "AIzaSyDNFXLa8WGAqhLnc8RrLLTgP3nLWvXkd1w",
