@@ -95,9 +95,27 @@
 
     <script>
         function appendImage(url) {
-    const container = document.getElementById('chat-container');
-    const wrap = document.createElement('div');
-    wrap.className = "flex justify-start message-in mb-4";
+            const container = document.getElementById('chat-container');
+            const wrap = document.createElement('div');
+            wrap.className = "flex justify-start message-in mb-4";
+            
+            wrap.innerHTML = `
+                <div class="bg-[#111] p-2 rounded-3xl border border-white/5 shadow-2xl max-w-[300px] relative overflow-hidden">
+                    <div id="loader" class="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-10">
+                        <i class="fas fa-sync animate-spin text-blue-500"></i>
+                    </div>
+                    <img src="${url}" 
+                         class="rounded-2xl w-full h-auto mb-2 border border-white/10 opacity-0 transition-opacity duration-1000" 
+                         alt="Neural Render"
+                         onload="this.previousElementSibling.remove(); this.classList.remove('opacity-0'); console.log('Render Success')">
+                    <p class="text-[7px] text-slate-600 font-mono text-center uppercase tracking-widest">Render Output: Verified</p>
+                </div>
+            `;
+            
+            container.appendChild(wrap);
+            container.scrollTop = container.scrollHeight;
+                }
+        
     
     // Kita tambahkan penanganan error jika gambar gagal dimuat
     wrap.innerHTML = `
