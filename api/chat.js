@@ -7,41 +7,49 @@ export default async function handler(req, res) {
   
   try {
     const { pesan, isImage } = req.body;
-    const apiKey = process.env.GEMINI_API_KEY;
+    const token = process.env.HUGGINGFACE_TOKEN;
 
-    // --- JALUR GAMBAR (TETAP AMAN) ---
+    // --- JALUR GAMBAR (FLUX - CEPAT & MANTAP) ---
     if (isImage === true || isImage === "true") {
       const seed = Math.floor(Math.random() * 999999);
       const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(pesan)}?width=1024&height=1024&nologo=true&seed=${seed}&model=flux`;
       return res.status(200).json({ type: "image", reply: imageUrl });
     }
 
-    // --- JALUR CHAT (STABLE VERSION) ---
-    // Kita pakai gemini-pro (versi 1.0) karena ini yang paling jarang error 'not found'
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${apiKey}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [
-          { role: "user", parts: [{ text: "Kamu adalah RHF-AI Omni-Core v2. Expert coding dan asisten Radit Tiya." }] },
-          { role: "model", parts: [{ text: "Siap Radit." }] },
-          { role: "user", parts: [{ text: pesan }] }
-        ]
-      })
-    });
+    // --- JALUR CHAT & CODING (LLAMA-3 SUPER TELITI) ---
+    const response = await fetch(
+      "https://api-inference.huggingface.co/models/meta-llama/Meta-Llama-3-8B-Instruct",
+      {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        method: "POST",
+        body: JSON.stringify({
+          inputs: `<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\nKamu adalah RHF-AI Omni-Core v2, asisten teknik super cerdas ciptaan Radit Tiya. Kamu sangat ahli dalam Coding, Android Modding, dan System Architect. Jawablah setiap pertanyaan Radit dengan sangat teliti, berikan kode yang bersih, dan gunakan bahasa Indonesia yang santai tapi profesional.<|eot_id|><|start_header_id|>user<|end_header_id|>\n\n${pesan}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n`,
+          parameters: {
+            max_new_tokens: 2048,
+            temperature: 0.7,
+            top_p: 0.9,
+            return_full_text: false
+          }
+        }),
+      }
+    );
 
     const data = await response.json();
     
-    if (data.candidates && data.candidates[0].content) {
-      const text = data.candidates[0].content.parts[0].text;
-      return res.status(200).json({ type: "text", reply: text });
+    if (data && data[0] && data[0].generated_text) {
+      // Membersihkan teks jika ada sisa-sisa prompt yang ikut terbawa
+      let reply = data[0].generated_text.trim();
+      return res.status(200).json({ type: "text", reply: reply });
     } else {
-      // Jika masih gagal, kita ganti ke model gemini-1.0-pro secara otomatis
-      const msg = data.error ? data.error.message : "Coba ganti Region Vercel ke Singapore";
-      return res.status(200).json({ type: "text", reply: `Sistem Masih Error: ${msg}` });
+      // Jika model sedang sibuk/loading
+      const errorDetail = data.error ? data.error : "Model sedang loading di server Hugging Face.";
+      return res.status(200).json({ type: "text", reply: `Llama Core sedang kalibrasi: ${errorDetail}. Tunggu 10 detik dan coba lagi, Radit.` });
     }
 
   } catch (err) {
-    return res.status(200).json({ type: "text", reply: "Backend Crash!" });
+    return res.status(200).json({ type: "text", reply: "SYSTEM ERROR: Jalur komunikasi Hugging Face terputus." });
   }
 }
