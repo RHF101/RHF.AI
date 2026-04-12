@@ -9,17 +9,17 @@ export default async function handler(req, res) {
     const { pesan, isImage } = req.body;
     const token = process.env.HUGGINGFACE_TOKEN;
 
-    // --- JALUR GAMBAR ---
+    // --- JALUR GAMBAR (FLUX) ---
     if (isImage === true || isImage === "true") {
       const seed = Math.floor(Math.random() * 999999);
       const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(pesan)}?width=1024&height=1024&nologo=true&seed=${seed}&model=flux`;
       return res.status(200).json({ type: "image", reply: imageUrl });
     }
 
-    // --- JALUR CHAT (STABLE ROUTE) ---
-    // Menggunakan model Mistral-7B-v0.3 sebagai alternatif yang lebih stabil di Router baru
+    // --- JALUR CHAT (LLAMA-3 VIA ROUTER BARU) ---
+    // URL Router terbaru tidak pakai '/hf-inference' di tengahnya
     const response = await fetch(
-      "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.3",
+      "https://router.huggingface.co/models/meta-llama/Meta-Llama-3-8B-Instruct",
       {
         headers: { 
           "Authorization": `Bearer ${token}`,
@@ -27,10 +27,11 @@ export default async function handler(req, res) {
         },
         method: "POST",
         body: JSON.stringify({
-          inputs: `<s>[INST] Kamu adalah RHF-AI Omni-Core v2 buatan Radit Tiya. Kamu ahli coding. Jawab pertanyaan ini dengan teliti dalam Bahasa Indonesia: ${pesan} [/INST]`,
+          inputs: `<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\nKamu adalah RHF-AI Omni-Core v2. Kamu asisten teknik cerdas buatan Radit Tiya. Ahli coding dan modding. Jawab dengan sangat teliti.<|eot_id|><|start_header_id|>user<|end_header_id|>\n\n${pesan}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n`,
           parameters: {
-            max_new_tokens: 1500,
-            temperature: 0.7
+            max_new_tokens: 2048,
+            temperature: 0.7,
+            return_full_text: false
           }
         }),
       }
@@ -38,21 +39,19 @@ export default async function handler(req, res) {
 
     const data = await response.json();
 
-    // Jika berhasil dapat teks
+    // Cek jika response sukses (biasanya array)
     if (Array.isArray(data) && data[0].generated_text) {
-      let reply = data[0].generated_text.split('[/INST]').pop().trim();
-      return res.status(200).json({ type: "text", reply: reply });
+      return res.status(200).json({ type: "text", reply: data[0].generated_text.trim() });
     } 
     
-    // Jika model sedang loading
-    if (data.error && data.error.includes("loading")) {
-      return res.status(200).json({ type: "text", reply: "Sistem sedang booting... Tunggu 20 detik dan kirim lagi ya, Dit." });
+    // Cek jika error loading (503)
+    if (data.error) {
+      return res.status(200).json({ type: "text", reply: `INFO: ${data.error}` });
     }
 
-    return res.status(200).json({ type: "text", reply: `Info Server: ${JSON.stringify(data)}` });
+    return res.status(200).json({ type: "text", reply: "Router terhubung tapi data kosong. Coba lagi, Dit!" });
 
   } catch (err) {
-    console.error(err);
-    return res.status(200).json({ type: "text", reply: "Neural Link putus total. Cek apakah Token HF di Vercel sudah benar, Dit!" });
+    return res.status(200).json({ type: "text", reply: "SYSTEM CRASH: Masalah pada kodingan Fetch Router." });
   }
 }
