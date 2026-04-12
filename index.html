@@ -15,25 +15,16 @@
         :root { --accent: #3b82f6; --bg: #000000; --glass: rgba(10, 10, 10, 0.8); }
         body { background: var(--bg); color: #e2e8f0; font-family: 'Inter', sans-serif; overflow: hidden; }
         .glass { background: var(--glass); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.05); }
-        
-        /* Sidebar Smooth Transition */
         .sidebar { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); width: 280px; z-index: 100; transform: translateX(-100%); position: fixed; inset-y: 0; left: 0; background: #050505; border-right: 1px solid rgba(255,255,255,0.05); }
         .sidebar.open { transform: translateX(0); }
-        
-        /* Hide Scrollbar */
         #chat-container::-webkit-scrollbar { width: 0px; }
-        
         .message-in { animation: fadeInUp 0.4s ease forwards; }
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
-        
-        /* Code Block Styling */
         .code-block { font-family: 'JetBrains Mono', monospace; font-size: 12px; background: #0d1117; padding: 15px; border-radius: 12px; border: 1px solid #30363d; margin: 10px 0; display: block; overflow-x: auto; color: #7ee787; line-height: 1.5; }
-        
         #overlay { background: rgba(0,0,0,0.7); display: none; position: fixed; inset: 0; z-index: 90; }
-        
-        /* Typing cursor */
         .typing::after { content: '|'; animation: blink 0.7s infinite; }
         @keyframes blink { 50% { opacity: 0; } }
+        .file-indicator { background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2); padding: 4px 10px; border-radius: 8px; font-size: 10px; color: #60a5fa; display: none; margin-bottom: 8px; }
     </style>
 </head>
 <body>
@@ -75,13 +66,21 @@
             <div id="chat-container" class="flex-1 overflow-y-auto p-4 lg:px-20 lg:py-10 space-y-6 scroll-smooth"></div>
 
             <div class="p-4 bg-gradient-to-t from-black via-black to-transparent">
-                <div class="max-w-4xl mx-auto flex items-end gap-2 bg-[#0a0a0a] border border-white/5 rounded-[2.5rem] p-2 shadow-2xl">
-                    <textarea id="user-input" rows="1" placeholder="Type a command..." class="flex-1 bg-transparent p-4 outline-none text-sm text-slate-200 resize-none" oninput="autoResize(this)"></textarea>
-                    <div class="flex gap-1 p-1">
-                        <button onclick="processAI(true)" title="Generate Image" class="w-12 h-12 rounded-full text-blue-400 hover:bg-blue-500/10 transition-colors"><i class="fas fa-wand-magic-sparkles"></i></button>
-                        <button onclick="processAI(false)" id="btn-send" class="w-12 h-12 rounded-full bg-blue-600 text-white shadow-lg active:scale-90 transition-all flex items-center justify-center">
-                            <i class="fas fa-paper-plane text-xs"></i>
-                        </button>
+                <div class="max-w-4xl mx-auto flex flex-col bg-[#0a0a0a] border border-white/5 rounded-[2rem] p-2 shadow-2xl">
+                    <div id="file-preview" class="file-indicator mx-2 mt-2">
+                        <i class="fas fa-file-code mr-2"></i> <span id="file-name"></span>
+                        <button onclick="clearFile()" class="ml-2 text-red-500"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div class="flex items-end gap-2">
+                        <input type="file" id="file-input" class="hidden" onchange="handleFileUpload(this)">
+                        <button onclick="document.getElementById('file-input').click()" class="w-12 h-12 rounded-full text-slate-400 hover:bg-white/5 transition-colors"><i class="fas fa-paperclip"></i></button>
+                        <textarea id="user-input" rows="1" placeholder="Type a command..." class="flex-1 bg-transparent p-3 outline-none text-sm text-slate-200 resize-none" oninput="autoResize(this)"></textarea>
+                        <div class="flex gap-1 p-1">
+                            <button onclick="processAI(true)" title="Generate Image" class="w-12 h-12 rounded-full text-blue-400 hover:bg-blue-500/10 transition-colors"><i class="fas fa-wand-magic-sparkles"></i></button>
+                            <button onclick="processAI(false)" id="btn-send" class="w-12 h-12 rounded-full bg-blue-600 text-white shadow-lg active:scale-90 transition-all flex items-center justify-center">
+                                <i class="fas fa-paper-plane text-xs"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
                 <p class="text-center text-[8px] text-slate-600 mt-3 tracking-widest uppercase">System Architect: Radit Tiya</p>
@@ -90,7 +89,6 @@
     </div>
 
     <script>
-        // --- Firebase Core ---
         const firebaseConfig = {
             apiKey: "AIzaSyDNFXLa8WGAqhLnc8RrLLTgP3nLWvXkd1w",
             authDomain: "rhf-confrims.firebaseapp.com",
@@ -105,13 +103,31 @@
 
         let historyChat = [];
         let currentChatId = null;
+        let attachedFileContent = "";
 
         function autoResize(textarea) {
             textarea.style.height = 'auto';
             textarea.style.height = (textarea.scrollHeight) + 'px';
         }
 
-        // --- Auth Logic ---
+        function handleFileUpload(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                attachedFileContent = e.target.result;
+                document.getElementById('file-name').innerText = file.name;
+                document.getElementById('file-preview').style.display = 'block';
+            };
+            reader.readAsText(file);
+        }
+
+        function clearFile() {
+            attachedFileContent = "";
+            document.getElementById('file-input').value = "";
+            document.getElementById('file-preview').style.display = 'none';
+        }
+
         function loginGoogle() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
         auth.onAuthStateChanged(user => {
             if (user) {
@@ -129,13 +145,12 @@
             ov.style.display = sb.classList.contains('open') ? 'block' : 'none';
         }
 
-        // --- Core Engine ---
         async function processAI(isImageMode) {
             const input = document.getElementById('user-input');
             const pesan = input.value.trim();
-            if (!pesan) return;
+            if (!pesan && !attachedFileContent) return;
 
-            appendMessage('user', pesan);
+            appendMessage('user', pesan + (attachedFileContent ? "\n[File attached]" : ""));
             input.value = '';
             input.style.height = 'auto';
 
@@ -146,11 +161,13 @@
                     body: JSON.stringify({ 
                         pesan: pesan, 
                         isImage: isImageMode, 
-                        history: historyChat 
+                        history: historyChat,
+                        fileContent: attachedFileContent
                     })
                 });
 
                 const data = await response.json();
+                clearFile();
                 
                 if (data.type === "image") {
                     appendImage(data.reply);
@@ -188,9 +205,8 @@
             const wrap = document.createElement('div');
             wrap.className = "flex justify-start message-in mb-4";
             
-            const inner = document.createElement('div');
-            // Detect Code Block
             const isCode = text.includes('```');
+            const inner = document.createElement('div');
             inner.className = isCode 
                 ? "code-block w-full" 
                 : "bg-[#0a0a0a] border border-white/10 text-slate-300 px-5 py-4 rounded-2xl rounded-tl-none text-[13px] max-w-[90%] whitespace-pre-wrap leading-relaxed typing";
@@ -199,7 +215,6 @@
             container.appendChild(wrap);
 
             let i = 0;
-            // Clean markdown symbols for typing effect
             const cleanText = text.replace(/```/g, ''); 
             
             function typing() {
@@ -210,6 +225,7 @@
                     setTimeout(typing, 5); 
                 } else {
                     inner.classList.remove('typing');
+                    if (isCode) inner.innerText = cleanText; // Ensure full code is shown correctly
                 }
             }
             typing();
@@ -225,10 +241,8 @@
             </div>`;
             container.appendChild(wrap);
             container.scrollTop = container.scrollHeight;
-            // History image is not pushed to AI text memory to avoid context confusion
         }
 
-        // --- Firestore Persistence ---
         async function saveToFirestore(u, a) {
             if (!auth.currentUser) return;
             const uid = auth.currentUser.uid;
@@ -274,7 +288,7 @@
             snapshot.forEach(doc => {
                 const data = doc.data();
                 appendMessage('user', data.user);
-                if (data.ai.includes('pollinations.ai')) { 
+                if (data.ai.includes('pollinations.ai') || data.ai.includes('http')) { 
                     appendImage(data.ai); 
                 } else { 
                     appendMessage('ai', data.ai); 
