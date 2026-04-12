@@ -9,16 +9,16 @@ export default async function handler(req, res) {
     const { pesan, isImage } = req.body;
     const token = process.env.HUGGINGFACE_TOKEN;
 
-    // --- JALUR GAMBAR (FLUX - CEPAT & MANTAP) ---
+    // --- JALUR GAMBAR (FLUX - TETAP AMAN) ---
     if (isImage === true || isImage === "true") {
       const seed = Math.floor(Math.random() * 999999);
       const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(pesan)}?width=1024&height=1024&nologo=true&seed=${seed}&model=flux`;
       return res.status(200).json({ type: "image", reply: imageUrl });
     }
 
-    // --- JALUR CHAT & CODING (LLAMA-3 SUPER TELITI) ---
+    // --- JALUR CHAT & CODING (MENGGUNAKAN ROUTER BARU) ---
     const response = await fetch(
-      "https://api-inference.huggingface.co/models/meta-llama/Meta-Llama-3-8B-Instruct",
+      "https://router.huggingface.co/hf-inference/models/meta-llama/Meta-Llama-3-8B-Instruct",
       {
         headers: { 
           Authorization: `Bearer ${token}`,
@@ -26,7 +26,7 @@ export default async function handler(req, res) {
         },
         method: "POST",
         body: JSON.stringify({
-          inputs: `<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\nKamu adalah RHF-AI Omni-Core v2, asisten teknik super cerdas ciptaan Radit Tiya. Kamu sangat ahli dalam Coding, Android Modding, dan System Architect. Jawablah setiap pertanyaan Radit dengan sangat teliti, berikan kode yang bersih, dan gunakan bahasa Indonesia yang santai tapi profesional.<|eot_id|><|start_header_id|>user<|end_header_id|>\n\n${pesan}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n`,
+          inputs: `<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\nKamu adalah RHF-AI Omni-Core v2. Kamu asisten teknik cerdas buatan Radit Tiya. Kamu ahli coding dan modding. Jawab dengan sangat teliti dan gunakan bahasa Indonesia santai.<|eot_id|><|start_header_id|>user<|end_header_id|>\n\n${pesan}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n`,
           parameters: {
             max_new_tokens: 2048,
             temperature: 0.7,
@@ -40,16 +40,17 @@ export default async function handler(req, res) {
     const data = await response.json();
     
     if (data && data[0] && data[0].generated_text) {
-      // Membersihkan teks jika ada sisa-sisa prompt yang ikut terbawa
       let reply = data[0].generated_text.trim();
       return res.status(200).json({ type: "text", reply: reply });
     } else {
-      // Jika model sedang sibuk/loading
-      const errorDetail = data.error ? data.error : "Model sedang loading di server Hugging Face.";
-      return res.status(200).json({ type: "text", reply: `Llama Core sedang kalibrasi: ${errorDetail}. Tunggu 10 detik dan coba lagi, Radit.` });
+      // Menangani jika model sedang loading (Status 503)
+      if (data.error && data.error.includes("currently loading")) {
+         return res.status(200).json({ type: "text", reply: "Llama Core sedang dipanaskan di server Hugging Face. Coba kirim pesan lagi dalam 15 detik, Radit." });
+      }
+      return res.status(200).json({ type: "text", reply: "Sistem sedang sinkronisasi alamat baru. Coba kirim ulang, Radit." });
     }
 
   } catch (err) {
-    return res.status(200).json({ type: "text", reply: "SYSTEM ERROR: Jalur komunikasi Hugging Face terputus." });
+    return res.status(200).json({ type: "text", reply: "SYSTEM ERROR: Jalur Router Hugging Face bermasalah." });
   }
 }
