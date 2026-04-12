@@ -1,5 +1,5 @@
 export default async function handler(req, res) {
-  // Header wajib agar tidak diblokir browser
+  // Biar browser nggak blokir (CORS)
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -10,13 +10,13 @@ export default async function handler(req, res) {
     const { pesan, isImage } = req.body;
     const token = process.env.HUGGINGFACE_TOKEN;
 
-    // --- JALUR GAMBAR (FLUX) ---
+    // --- FITUR GAMBAR (FLUX - TETAP PAKAI JALUR LAMA) ---
     if (isImage === true || isImage === "true") {
       const urlImg = `https://image.pollinations.ai/prompt/${encodeURIComponent(pesan)}?width=1024&height=1024&nologo=true&model=flux`;
       return res.status(200).json({ type: "image", reply: urlImg });
     }
 
-    // --- JALUR CHAT (MISTRAL VIA ROUTER) ---
+    // --- FITUR CHAT (MISTRAL VIA ROUTER BARU) ---
     const response = await fetch(
       "https://router.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.3",
       {
@@ -38,13 +38,12 @@ export default async function handler(req, res) {
     if (Array.isArray(data) && data[0].generated_text) {
       return res.status(200).json({ type: "text", reply: data[0].generated_text.trim() });
     } else {
-      // Jika server HF memberikan pesan error tertentu
-      const errorMsg = data.error || "Gagal sinkronisasi otak AI.";
-      return res.status(200).json({ type: "text", reply: `INFO: ${errorMsg}` });
+      const errorDetail = data.error || "Gagal sinkronisasi.";
+      return res.status(200).json({ type: "text", reply: `INFO AI: ${errorDetail}` });
     }
 
   } catch (err) {
-    // Memberikan pesan error yang sangat detail agar kita tahu rusaknya di mana
-    return res.status(200).json({ type: "text", reply: `LOG ERROR: ${err.message}` });
+    // Menampilkan error asli biar kita bisa lacak kalau masih gagal
+    return res.status(200).json({ type: "text", reply: `CRASH LOG: ${err.message}` });
   }
 }
