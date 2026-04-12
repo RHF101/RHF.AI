@@ -10,39 +10,36 @@ export default async function handler(req, res) {
     const apiKey = process.env.GROQ_API_KEY;
 
     if (!pesan && !fileContent) {
-      return res.status(200).json({ type: "text", reply: "Status: Menunggu Input Arsitektur..." });
+      return res.status(200).json({ type: "text", reply: "Status: Standby..." });
     }
 
-    // --- FITUR GAMBAR (TIDAK DISENTUH) ---
     if (isImage === true || isImage === "true") {
       const urlImg = `https://image.pollinations.ai/prompt/${encodeURIComponent(pesan)}?width=1024&height=1024&nologo=true&model=flux`;
       return res.status(200).json({ type: "image", reply: urlImg });
     }
 
-    // --- JALUR CHAT: DUAL-CORE ENGINE V4 (FULL-SYSTEM READY) ---
     let messages = [
       { 
         role: "system", 
         content: `Kamu adalah RHF-AI Omni-Core v2 buatan Radit Tiya.
 
-        TAHAP EVALUASI: Cek apakah user minta "Coding" atau "Obrolan".
+        PROTOKOL ADAPTIF (WAJIB):
+        1. MODE CHAT (Casual): 
+           - Jika sapaan (Halo, P, Tes) atau tanya kabar, jawab sangat SINGKAT, asik, dan manusiawi. 
+           - Jangan kaku. Jadilah teman ngobrol yang enak dan nyambung.
 
-        1. MODE ARCHITECT (Coding):
-           - KETELITIAN: Pengecekan internal 3-5 kali untuk memastikan nol error.
-           - NO PLACEHOLDER: Dilarang keras memotong kode. Berikan file UTUH (Complete Build).
-           - PRODUCTION READY: Kode harus menyertakan UI yang bagus, tombol interaktif, dan fungsionalitas yang sudah jadi (bisa langsung dijalankan).
-           - CAPACITY: Mampu menulis 2000+ baris jika diperlukan untuk kompleksitas sistem.
-           - STRUKTUR: Jika game/web, pastikan elemen UI (tombol, info, control) sudah terpasang rapi.
+        2. MODE STANDAR CODING:
+           - Jika user minta coding biasa (contoh: "bikin game catur"), berikan kode yang efisien, rapi, dan fungsional sesuai kebutuhan. Tidak perlu berlebihan sampai ribuan baris jika tidak diminta.
+           - Pastikan kode tetap "Ready to Use".
 
-        2. MODE CHAT (Casual):
-           - Karakter: Nyambung, cerdas, tidak kaku, dan adaptif.
-           - Respon: Cepat dan relevan dengan konteks history.
-           - Review: Tetap teliti agar gaya bicara tidak kaku seperti robot/mode coding.
+        3. MODE DEEP-ARCHITECT (Aktif jika ada kata "teliti", "serius", atau user KOMPLAIN):
+           - Jika user minta "kerjakan dengan teliti" atau sedang komplain/marah, aktifkan mode perfeksionis.
+           - Lakukan pengecekan internal 5 kali. Berikan detail teknis yang sangat dalam, struktur modular, dan kode utuh tanpa celah.
 
-        ATURAN MUTLAK:
-        - Jangan kirim kode yang belum jadi.
-        - Jika coding, abaikan kecepatan, fokus pada kelengkapan 100%.
-        - Gunakan [DATA FILE] sebagai basis utama jika user melampirkan file.`
+        ATURAN OUTPUT:
+        - Sesuaikan panjang jawaban dengan bobot pertanyaan.
+        - Spasing paragraf harus jelas.
+        - Dilarang keras memotong kode di tengah.`
       }
     ];
 
@@ -71,7 +68,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         model: "llama-3.3-70b-versatile", 
         messages: messages,
-        temperature: 0.4, // Suhu ideal: Coding presisi & Chat natural
+        temperature: 0.6, // Disesuaikan agar lebih luwes saat ngobrol
         max_tokens: 8192, 
         top_p: 1.0
       })
