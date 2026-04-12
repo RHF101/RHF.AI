@@ -4,54 +4,99 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RHF-AI Omni-Core v2</title>
+    
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+
     <style>
         :root {
-            --bg-color: #0d1117;
+            --bg: #0d1117;
             --chat-bg: #161b22;
-            --user-bubble: #238636;
-            --ai-bubble: #21262d;
-            --text-color: #e6edf3;
             --accent: #58a6ff;
-            --border-code: #30363d;
+            --text: #e6edf3;
+            --code-border: #30363d;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
+            font-family: 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--text);
             margin: 0;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
+            overflow: hidden;
         }
 
-        /* Login Screen (Tetap Ada) */
-        #login-screen {
+        /* --- HALAMAN LOGIN --- */
+        #login-page {
             position: fixed;
             inset: 0;
-            background: var(--bg-color);
+            background: var(--bg);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            z-index: 999;
+            z-index: 1000;
         }
 
-        /* Container Chat */
+        .logo-container img {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 3px solid var(--accent);
+            margin-bottom: 20px;
+        }
+
+        .login-box {
+            background: var(--chat-bg);
+            padding: 30px;
+            border-radius: 15px;
+            border: 1px solid var(--code-border);
+            text-align: center;
+            width: 300px;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            background: #0d1117;
+            border: 1px solid var(--code-border);
+            color: white;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background: var(--accent);
+            border: none;
+            color: white;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        /* --- DASHBOARD CHAT --- */
+        #main-chat {
+            display: none; /* Sembunyi sebelum login */
+            height: 100vh;
+            flex-direction: column;
+        }
+
         header {
             padding: 15px;
             background: var(--chat-bg);
-            text-align: center;
-            border-bottom: 1px solid #30363d;
-            color: var(--accent);
-            font-weight: bold;
+            border-bottom: 1px solid var(--code-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
 
-        #chat-container {
+        #chat-window {
             flex: 1;
             overflow-y: auto;
             padding: 20px;
@@ -60,137 +105,136 @@
             gap: 15px;
         }
 
-        /* PEMBATAS & KOTAK KODE (Anti Tembus) */
+        /* PEMBATAS KODE AGAR TIDAK TEMBUS */
         pre {
             background: #000 !important;
             padding: 15px;
-            border-radius: 10px;
+            border-radius: 8px;
+            border: 2px solid var(--code-border);
             overflow-x: auto;
-            margin: 15px 0;
-            border: 2px solid var(--border-code); /* Pembatas Tegas */
-            position: relative;
+            margin: 10px 0;
             display: block;
             max-width: 100%;
-            white-space: pre; /* Menjaga struktur kode */
         }
 
-        code {
-            font-family: 'Consolas', monospace;
-            font-size: 0.9em;
-            color: #d1d5db;
-        }
+        .message { max-width: 80%; padding: 12px; border-radius: 12px; line-height: 1.5; }
+        .user { align-self: flex-end; background: #238636; }
+        .ai { align-self: flex-start; background: var(--chat-bg); border: 1px solid var(--code-border); }
 
-        .message {
-            max-width: 85%;
-            padding: 12px 16px;
-            border-radius: 15px;
-            line-height: 1.6;
-        }
+        .ai-img { max-width: 100%; border-radius: 8px; margin-top: 10px; border: 1px solid var(--accent); }
 
-        .user-message { align-self: flex-end; background-color: var(--user-bubble); }
-        .ai-message { align-self: flex-start; background-color: var(--ai-bubble); border: 1px solid #30363d; }
-
-        /* Fitur Gambar */
-        .ai-image {
-            max-width: 100%;
-            border-radius: 10px;
-            margin-top: 10px;
-            border: 2px solid var(--accent);
-        }
-
-        .input-area {
+        .input-bar {
             padding: 20px;
             background: var(--chat-bg);
             display: flex;
             gap: 10px;
-            border-top: 1px solid #30363d;
         }
-
-        input { flex: 1; background: #0d1117; border: 1px solid #30363d; padding: 12px; border-radius: 8px; color: white; }
-        button { background: var(--accent); color: white; border: none; padding: 0 20px; border-radius: 8px; cursor: pointer; }
     </style>
 </head>
 <body>
 
-<div id="login-screen">
-    <h2>RHF-AI ACCESS</h2>
-    <input type="password" id="passInput" placeholder="Enter System Key...">
-    <button onclick="checkLogin()" style="margin-top: 10px; height: 40px;">LOGIN</button>
+<div id="login-page">
+    <div class="logo-container">
+        <img src="https://raw.githubusercontent.com/RHF101/RHF.AI/main/logo.png" alt="RHF Logo">
+    </div>
+    <div class="login-box">
+        <h3>RHF-AI OMNI-CORE</h3>
+        <input type="email" id="email" placeholder="Email Architect...">
+        <input type="password" id="password" placeholder="System Key...">
+        <button onclick="handleLogin()">ACCESS SYSTEM</button>
+    </div>
 </div>
 
-<header>RHF-AI OMNI-CORE v2</header>
+<div id="main-chat">
+    <header>
+        <span>RHF-AI OMNI-CORE v2</span>
+        <button onclick="handleLogout()" style="width: auto; padding: 5px 15px; font-size: 12px; background: #da3633;">LOGOUT</button>
+    </header>
 
-<div id="chat-container"></div>
+    <div id="chat-window"></div>
 
-<div class="input-area">
-    <input type="text" id="userInput" placeholder="Tanya atau ketik '/img [prompt]' untuk gambar..." onkeypress="if(event.key==='Enter') sendMessage()">
-    <button onclick="sendMessage()">KIRIM</button>
+    <div class="input-bar">
+        <input type="text" id="userMsg" placeholder="Type command or /img for visuals..." onkeypress="if(event.key==='Enter') send()">
+        <button onclick="send()" style="width: 80px;">SEND</button>
+    </div>
 </div>
 
 <script>
-    // Sistem Login
-    function checkLogin() {
-        const pass = document.getElementById('passInput').value;
-        if(pass === "radit123") { // Ganti password sesukamu
-            document.getElementById('login-screen').style.display = 'none';
-        } else {
-            alert("Akses Ditolak!");
-        }
+    // --- CONFIG FIREBASE KAMU (Ganti dengan punyamu) ---
+    const firebaseConfig = {
+        apiKey: "AIzaSy...", 
+        authDomain: "rhf-wallet.firebaseapp.com",
+        projectId: "rhf-wallet",
+        storageBucket: "rhf-wallet.appspot.com",
+        messagingSenderId: "...",
+        appId: "..."
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    // LOGIN LOGIC
+    async function handleLogin() {
+        const e = document.getElementById('email').value;
+        const p = document.getElementById('password').value;
+        try {
+            await auth.signInWithEmailAndPassword(e, p);
+            showChat();
+        } catch (err) { alert("Akses Ditolak: " + err.message); }
     }
 
-    async function sendMessage() {
-        const input = document.getElementById('userInput');
-        const text = input.value.trim();
-        if (!text) return;
+    function handleLogout() { auth.signOut().then(() => location.reload()); }
 
-        appendMessage('user', text);
+    auth.onAuthStateChanged(user => { if(user) showChat(); });
+
+    function showChat() {
+        document.getElementById('login-page').style.display = 'none';
+        document.getElementById('main-chat').style.display = 'flex';
+    }
+
+    // CHAT LOGIC
+    async function send() {
+        const input = document.getElementById('userMsg');
+        const text = input.value.trim();
+        if(!text) return;
+
+        append('user', text);
         input.value = '';
 
-        // Deteksi Perintah Gambar
-        let isImg = false;
-        let promptPesan = text;
-        if(text.startsWith('/img ')) {
-            isImg = true;
-            promptPesan = text.replace('/img ', '');
-        }
+        let isImg = text.startsWith('/img ');
+        let query = isImg ? text.replace('/img ', '') : text;
 
         try {
-            const response = await fetch('/api/chat', {
+            const res = await fetch('/api/chat', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ pesan: promptPesan, isImage: isImg })
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ pesan: query, isImage: isImg })
             });
-
-            const data = await response.json();
+            const data = await res.json();
             
-            if(data.type === "image") {
-                appendImage(data.reply);
-            } else {
-                appendMessage('ai', data.reply);
-            }
-        } catch (e) {
-            appendMessage('ai', 'Error transmisi!');
-        }
+            if(data.type === 'image') appendImg(data.reply);
+            else append('ai', data.reply);
+        } catch (e) { append('ai', 'Error Transmisi!'); }
     }
 
-    function appendMessage(sender, content) {
+    function append(sender, content) {
+        const win = document.getElementById('chat-window');
         const div = document.createElement('div');
-        div.className = `message ${sender}-message`;
+        div.className = `message ${sender}`;
         if(sender === 'ai') {
             div.innerHTML = marked.parse(content);
-            div.querySelectorAll('pre code').forEach((el) => hljs.highlightElement(el));
-        } else {
-            div.textContent = content;
-        }
-        document.getElementById('chat-container').appendChild(div);
-        document.getElementById('chat-container').scrollTop = document.getElementById('chat-container').scrollHeight;
+            div.querySelectorAll('pre code').forEach(el => hljs.highlightElement(el));
+        } else { div.textContent = content; }
+        win.appendChild(div);
+        win.scrollTop = win.scrollHeight;
     }
 
-    function appendImage(url) {
+    function appendImg(url) {
+        const win = document.getElementById('chat-window');
         const img = document.createElement('img');
         img.src = url;
-        img.className = 'ai-image';
-        document.getElementById('chat-container').appendChild(img);
+        img.className = 'ai-img';
+        win.appendChild(img);
+        win.scrollTop = win.scrollHeight;
     }
 </script>
 </body>
