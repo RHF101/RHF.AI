@@ -9,38 +9,43 @@ export default async function handler(req, res) {
     const { pesan, isImage } = req.body;
     const token = process.env.HUGGINGFACE_TOKEN;
 
-    // --- JALUR GAMBAR (Flux Pollinations) ---
-    if (isImage === true || isImage === "true") {
-      const seed = Math.floor(Math.random() * 999999);
-      const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(pesan)}?width=1024&height=1024&nologo=true&seed=${seed}&model=flux`;
-      return res.status(200).json({ type: "image", reply: imageUrl });
+    // Cek apakah token terbaca oleh Vercel
+    if (!token) {
+      return res.status(200).json({ type: "text", reply: "DEBUG: Token tidak terbaca! Pastikan sudah klik 'Add' dan 'Redeploy' di Vercel." });
     }
 
-    // --- JALUR CHAT (Llama-3 Router) ---
+    // --- JALUR GAMBAR (Flux) ---
+    if (isImage === true || isImage === "true") {
+      const seed = Math.floor(Math.random() * 999999);
+      const urlImg = `https://image.pollinations.ai/prompt/${encodeURIComponent(pesan)}?width=1024&height=1024&nologo=true&seed=${seed}&model=flux`;
+      return res.status(200).json({ type: "image", reply: urlImg });
+    }
+
+    // --- JALUR CHAT (Llama-3) ---
     const response = await fetch(
       "https://router.huggingface.co/models/meta-llama/Meta-Llama-3-8B-Instruct",
       {
         headers: { 
-          "Authorization": `Bearer ${token}`,
+          "Authorization": `Bearer ${token.trim()}`,
           "Content-Type": "application/json"
         },
         method: "POST",
-        body: JSON.stringify({ 
-          inputs: pesan,
-          parameters: { wait_for_model: true } 
-        }),
+        body: JSON.stringify({ inputs: pesan }),
       }
     );
 
     const data = await response.json();
 
-    if (Array.isArray(data) && data[0].generated_text) {
+    if (data && Array.isArray(data) && data[0].generated_text) {
       return res.status(200).json({ type: "text", reply: data[0].generated_text.trim() });
     } else {
-      return res.status(200).json({ type: "text", reply: `INFO: ${data.error || "Model sedang booting, coba lagi."}` });
+      // Jika server HF kirim pesan error (seperti loading atau model not found)
+      const detail = data.error || "Gagal mendapatkan teks dari AI.";
+      return res.status(200).json({ type: "text", reply: `INFO SERVER: ${detail}` });
     }
 
   } catch (err) {
-    return res.status(200).json({ type: "text", reply: "SYSTEM ERROR: Koneksi backend terputus." });
+    // Memberikan info error asli ke chat agar kita bisa debug
+    return res.status(200).json({ type: "text", reply: `SYSTEM CRASH: ${err.message}` });
   }
 }
