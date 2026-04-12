@@ -2,8 +2,8 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RHF-AI OMNI-CORE v2</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>RHF-AI OMNI-CORE v3</title>
     
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
@@ -14,55 +14,80 @@
             --bg: #0d1117;
             --chat-bg: #161b22;
             --accent: #58a6ff;
+            --user-bbl: #238636;
+            --ai-bbl: #21262d;
             --text: #e6edf3;
-            --code-border: #30363d;
+            --border: #30363d;
         }
 
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; overflow: hidden; }
+        body { 
+            font-family: 'Inter', -apple-system, system-ui, sans-serif; 
+            background: var(--bg); color: var(--text); 
+            margin: 0; display: flex; flex-direction: column; height: 100vh;
+        }
 
-        /* --- LOGIN SCREEN --- */
+        /* --- RESPONSIVE LOGIN --- */
         #login-page {
             position: fixed; inset: 0; background: var(--bg);
-            display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 2000;
         }
-        .logo-box img { 
-            width: 140px; height: 140px; border-radius: 50%; 
-            border: 4px solid var(--accent); margin-bottom: 30px;
-            box-shadow: 0 0 20px rgba(88, 166, 255, 0.2);
-        }
+        .logo-box img { width: 120px; height: 120px; border-radius: 50%; border: 3px solid var(--accent); margin-bottom: 20px; }
         .btn-google {
-            display: flex; align-items: center; gap: 10px; background: white; color: #000;
-            border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s;
+            display: flex; align-items: center; gap: 10px; background: white; color: black;
+            border: none; padding: 12px 24px; border-radius: 12px; font-weight: 600; cursor: pointer;
         }
-        .btn-google:hover { background: #e1e1e1; }
 
-        /* --- MAIN SYSTEM --- */
-        #main-system { display: none; height: 100vh; flex-direction: column; }
-        header { 
-            padding: 10px 20px; background: var(--chat-bg); 
-            border-bottom: 1px solid var(--code-border); 
-            display: flex; justify-content: space-between; align-items: center; 
+        /* --- MAIN INTERFACE --- */
+        #main-system { display: none; flex-direction: column; height: 100%; }
+
+        header {
+            padding: 12px 20px; background: var(--chat-bg); border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
         }
-        .user-profile { display: flex; align-items: center; gap: 10px; }
-        .user-profile img { width: 35px; height: 35px; border-radius: 50%; border: 2px solid var(--accent); }
-        
-        #chat-flow { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
 
-        /* GUARD CODE - PEMBATAS PEMROGRAMAN ANTI TEMBUS */
+        .status-pill { background: rgba(88, 166, 255, 0.1); color: var(--accent); padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; border: 1px solid var(--accent); }
+
+        /* --- CHAT FLOW (SMOOTH SCROLL) --- */
+        #chat-flow {
+            flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 18px;
+            scroll-behavior: smooth;
+        }
+
+        /* BUBBLE CHAT & GUARD CODE */
+        .bubble { max-width: 85%; padding: 14px 18px; border-radius: 18px; line-height: 1.6; font-size: 15px; position: relative; word-wrap: break-word; }
+        .user { align-self: flex-end; background: var(--user-bbl); border-bottom-right-radius: 4px; color: white; }
+        .ai { align-self: flex-start; background: var(--ai-bbl); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+
         pre {
-            background: #000 !important; padding: 15px; border-radius: 10px;
-            border: 2px solid var(--accent); overflow-x: auto; margin: 15px 0;
-            display: block; max-width: 100%; position: relative;
+            background: #000 !important; padding: 16px; border-radius: 12px;
+            border: 2px solid var(--accent); overflow-x: auto; margin: 12px 0;
+            position: relative;
         }
-        code { font-family: 'Consolas', 'Fira Code', monospace; font-size: 0.9em; }
+        code { font-family: 'Fira Code', 'Consolas', monospace; font-size: 13px; color: #d1d5db; }
 
-        .bubble { max-width: 80%; padding: 14px; border-radius: 15px; line-height: 1.6; }
-        .user { align-self: flex-end; background: #238636; border-bottom-right-radius: 2px; }
-        .ai { align-self: flex-start; background: var(--chat-bg); border: 1px solid var(--code-border); border-bottom-left-radius: 2px; }
+        /* --- INPUT AREA --- */
+        .input-container {
+            padding: 15px; background: var(--chat-bg); border-top: 1px solid var(--border);
+            display: flex; flex-direction: column; gap: 10px;
+        }
+        .toolbar { display: flex; gap: 10px; align-items: center; }
+        .input-row { display: flex; gap: 10px; }
+        
+        input[type="text"] {
+            flex: 1; background: #0d1117; border: 1px solid var(--border);
+            padding: 12px 16px; border-radius: 12px; color: white; outline: none; transition: 0.2s;
+        }
+        input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(88,166,255,0.2); }
 
-        .input-box { padding: 20px; background: var(--chat-bg); display: flex; gap: 10px; border-top: 1px solid var(--code-border); }
-        input { flex: 1; background: #0d1117; border: 1px solid var(--code-border); padding: 12px; border-radius: 8px; color: white; outline: none; }
-        input:focus { border-color: var(--accent); }
+        .btn-action { background: var(--accent); border: none; color: white; padding: 12px 20px; border-radius: 12px; cursor: pointer; font-weight: bold; }
+        .btn-file { background: #30363d; border: 1px solid var(--border); color: #8b949e; padding: 8px; border-radius: 8px; cursor: pointer; font-size: 18px; }
+
+        /* MOBILE ADJUSTMENTS */
+        @media (max-width: 600px) {
+            .bubble { max-width: 90%; font-size: 14px; }
+            header span { font-size: 14px; }
+            .btn-action { padding: 12px 15px; }
+        }
     </style>
 </head>
 <body>
@@ -71,46 +96,49 @@
     <div class="logo-box">
         <img src="https://i.postimg.cc/4xr9PgN1/file-00000000aa9471fabbcb615488cb4b8a.png" alt="RHF Logo">
     </div>
-    <div class="login-container">
-        <button class="btn-google" id="loginBtn">
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20">
-            Login to RHF Omni-Core
-        </button>
-    </div>
+    <button class="btn-google" id="loginBtn">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20">
+        Enter Omni-Core System
+    </button>
 </div>
 
 <div id="main-system">
     <header>
-        <span style="font-weight: bold; letter-spacing: 1px; color: var(--accent);">RHF-AI v2.3</span>
-        <div class="user-profile">
-            <span id="uName" style="font-size: 13px;"></span>
-            <img id="uImg" src="data:image/webp;base64,UklGRsgFAABXRUJQVlA4ILwFAADwJQCdASqlAKkAPu1srU8ppiSjLxOpYTAdiWRu3VroLLGZYJ9n/Yeb57umzpcJz/6F3rnmQ86L0t/6ffc96NyCz6RLv2kzOIkLKP/mP50wd4DMp2uvOh+Noj3IKXHdU0gU9pN6VoEcxudVxYGNDHvxbWKwORg4IkZZ9fUJRAiVnJilVRV4b7RiimNn2pwrl3RIcCWCXs3xOv+xfFgVo3b/5AzCvCc+J1j6jAur9riT/Uf0V3LNZnK6JfqNbpzny9n50IreuFnQ0LluPaunvS2N5OoIPf8aeyxWjve+dPJBgu4btoQgPprgV6I/kPUgxpcUNeH/G9LEu3tV2AOueswwRkx63xV8Ili9wDUYQtIry89ShYjkxp8E6ceEFb8YQ9vUg0gWDeXmwS5rrxuAWnve/4SgHWyxTgAA/vUIoxMmM2QvkSP8gq/MlxkPg2o9Z5Tg34VDuU28UJZZug5x1NynUeh/VzQg8KMOyme7ccBog85bURaXMykjYsDUuA1wv6UfuffcJ7fl7ySELwfuKEoqJEj0P10pjTwfcQ2Ql4zcORiK+aW4XOYZIN9uc9GhyEO6BElTDE0/fTWqa0n98lz0KpiOt2mtCKdZ/5q4FfbclQlv/00OD/4nv1k9h7t3tfZST44CK72x+W2vGnsd8vGrCNNiOj2r107qmN/fOd0f7Q5ca9xeBuwX9lcyQU3PD+mAxqe6QL3tmOVOvS1iy49njG2a3h9ZEvupn/35+Qv9tdQ0NP02L7UJvUfoEl8taQGNlFJBe87POPrEovEs+sDNhmk7NYRf3lt4Or74AHGC9blA1eJNf99exHDKItCCSrJpjVsSa5uVcZnsxTXtvmLS6X7aoUk49h7kGXIeEFxTorMigQSfh828C1vrKuwSRV/vftbZL6W3opmhud2vVelakJiAqCmr2wPlwh1wujwmBoaoadH0m7162LRX4L/lntfFfC+Fag/hrj8CQKBwNZHYuIsw5lZaf7Kyq2gSixdoAAAAAU/p8IwwXB+Xo7I/Gjqf2k5iMdCkaf1S5Hc25XgiueDZjfIppT3yH94PH5wLL6jZ6YJ0yWCuhz6K4HFeUjRVyH81KVQF+h7NZcDU7YXXIOc4jF+x2HGqEQEXbmomH4MRVQ/exaDUKeLPZ6zJhedt8UjKGVda4CNN9ZTqKXaUdNZnSuLDnByqJmU7YS/QrBPVLQKX0YwprJgAEs6qX+vaw/T+1z9l58OweT0h6wiUjSFAZNZM2/8zP0ATf5dqP1hYzPvSVvnsOd3GzUVX1mU3Ccon9ea/DuRtklr1k5KHAjEEnnBfv6jYfy/WfsFWtz0yLXa1LBqp4+Lec44TGU+Noi/ZkCdmR5Tkalft6zjhDCtb931z2YDLS9YWXGtO0OJxD9+xKDKRxW0+BscGYup4EuseolU4FRpRJk0H6Ym8gNZ0MRpmi4ApFg5aRJZMSEq/ciEINuO32/BDoZRAWGXo8eMLKQjFDeaRqciIMDqp6zAI5vDQrXlfY3EDtInYQeMFNlo1cLTM1pgx4pwa1VRnEnlm/9GjkB7pIvTA6U7eWGSbpnnSeVLV9ioRhzNArpSdsg6MqjjyimXj+QZGP6EJ6trG3GQjVxfTa449Q2nWGEYwhQXzpKTfcJTX7lk5bLxw0p2RHuagiyBcsvqmUaQY7c4lHqUnWN9ykM771n8S5Qn02rCyI2SwcAsDYxE6okOKIj3onATQPb5/X88Vj4VIP8cRNhEVe4bXlqYDr+1EltWtMtol+Vb/65n6o6/1ZoPLUPYBSngHe9XFlPUAhkIn693Tb08UEM6/oNPa9e4/gyhbt5h0VMH1iATf9EgOyeYnXv2JA7+RFZCUlP536B40y3x8mA0F/NCJn9vOXRbVlYRchMFkRRZawoqIRPa8JU7O5lIqHQu7Q56ytD5P+5ROIP607SbrWNxjriiXBRckA9taHMP2YAAAAAA==" alt="User">
-            <button id="logoutBtn" style="background:#da3633; border:none; color:white; padding:5px 10px; border-radius:5px; cursor:pointer; font-size:12px;">Exit</button>
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span class="status-pill">ONLINE</span>
+            <span style="font-weight: bold;">RHF-AI v3.0</span>
         </div>
+        <img id="uImg" src="" style="width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--accent); cursor: pointer;" onclick="auth.signOut()">
     </header>
+
     <div id="chat-flow"></div>
-    <div class="input-box">
-        <input type="text" id="msgInput" placeholder="Command or /img..." autocomplete="off">
-        <button id="sendBtn" style="background:var(--accent); border:none; color:white; padding:0 20px; border-radius:8px; cursor:pointer; font-weight:bold;">SEND</button>
+
+    <div class="input-container">
+        <div class="toolbar">
+            <label class="btn-file" title="Upload File (Target 4)">
+                📁 <input type="file" id="fileInput" hidden onchange="handleFile(this)">
+            </label>
+            <span id="fileName" style="font-size: 11px; color: var(--accent);"></span>
+        </div>
+        <div class="input-row">
+            <input type="text" id="msgInput" placeholder="Tanya apapun, debug kode, atau buat gambar..." autocomplete="off">
+            <button class="btn-action" id="sendBtn">SEND</button>
+        </div>
     </div>
 </div>
 
 <script type="module">
-    // Import SDK Modular
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js";
-    import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, where } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, where, limit } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js";
 
-    // Konfigurasi RHF-CONFRIMS Kamu
     const firebaseConfig = {
         apiKey: "AIzaSyDNFXLa8WGAqhLnc8RrLLTgP3nLWvXkd1w",
         authDomain: "rhf-confrims.firebaseapp.com",
-        databaseURL: "https://rhf-confrims-default-rtdb.firebaseio.com",
         projectId: "rhf-confrims",
         storageBucket: "rhf-confrims.firebasestorage.app",
         messagingSenderId: "631231605918",
-        appId: "1:631231605918:web:d42d4e34e9ea14b2d65f8f",
-        measurementId: "G-XRKGWWX0ZP"
+        appId: "1:631231605918:web:d42d4e34e9ea14b2d65f8f"
     };
 
     const app = initializeApp(firebaseConfig);
@@ -118,87 +146,112 @@
     const db = getFirestore(app);
     const provider = new GoogleAuthProvider();
 
-    // Elements
-    const loginPage = document.getElementById('login-page');
-    const mainSystem = document.getElementById('main-system');
-    const msgInput = document.getElementById('msgInput');
-    const flow = document.getElementById('chat-flow');
+    let chatMemory = []; // Context Memory (Target 1 & 2)
+    let currentFileContent = ""; 
 
-    // Auth Logic
+    // AUTH HANDLING
     document.getElementById('loginBtn').onclick = () => signInWithPopup(auth, provider);
-    document.getElementById('logoutBtn').onclick = () => signOut(auth).then(() => location.reload());
-
+    
     onAuthStateChanged(auth, (user) => {
         if (user) {
-            loginPage.style.display = 'none';
-            mainSystem.style.display = 'flex';
-            document.getElementById('uName').textContent = user.displayName.split(' ')[0];
-            if(user.photoURL) document.getElementById('uImg').src = user.photoURL;
-            loadIngatan(user.uid);
+            document.getElementById('login-page').style.display = 'none';
+            document.getElementById('main-system').style.display = 'flex';
+            document.getElementById('uImg').src = user.photoURL || "https://i.postimg.cc/4xr9PgN1/file.png";
+            loadMessages(user.uid);
         }
     });
 
-    // Ingatan Luas (Firestore Load)
-    function loadIngatan(uid) {
+    // LOAD MEMORY FROM FIRESTORE
+    function loadMessages(uid) {
         const q = query(collection(db, "chats"), where("uid", "==", uid), orderBy("time", "asc"));
         onSnapshot(q, (snap) => {
+            const flow = document.getElementById('chat-flow');
             flow.innerHTML = '';
+            chatMemory = []; // Reset memory and refill
             snap.forEach(doc => {
                 const d = doc.data();
                 appendUI(d.sender, d.msg);
+                chatMemory.push({ role: d.sender === 'user' ? 'user' : 'assistant', content: d.msg });
             });
         });
     }
 
-    // Simpan ke Firestore
-    async function simpan(sender, message) {
-        await addDoc(collection(db, "chats"), {
-            uid: auth.currentUser.uid,
-            sender: sender,
-            msg: message,
-            time: serverTimestamp()
-        });
-    }
-
-    // Send Engine
-    window.processSend = async () => {
-        const text = msgInput.value.trim();
-        if(!text) return;
-        
-        msgInput.value = '';
-        await simpan('user', text);
-
-        const isImg = text.startsWith('/img ');
-        const prompt = isImg ? text.replace('/img ', '') : text;
-
-        try {
-            const res = await fetch('/api/chat', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ pesan: prompt, isImage: isImg })
-            });
-            const data = await res.json();
-            
-            if(data.type === 'image') {
-                await simpan('ai', `![Generated Image](${data.reply})`);
-            } else {
-                await simpan('ai', data.reply);
-            }
-        } catch (e) {
-            appendUI('ai', '⚠️ Error transmisi data ke Groq.');
+    // FILE UNDERSTANDING (Target 4)
+    window.handleFile = (input) => {
+        const file = input.files[0];
+        if (file) {
+            document.getElementById('fileName').textContent = `📄 ${file.name}`;
+            const reader = new FileReader();
+            reader.onload = (e) => { currentFileContent = e.target.result; };
+            reader.readAsText(file);
         }
     };
 
-    document.getElementById('sendBtn').onclick = window.processSend;
-    msgInput.onkeypress = (e) => { if(e.key === 'Enter') window.processSend(); };
+    // SEND ENGINE (REASONING & MULTI-STEP)
+    async function send() {
+        const input = document.getElementById('msgInput');
+        let text = input.value.trim();
+        if(!text) return;
+
+        input.value = '';
+        const fullMsg = currentFileContent ? `Context File:\n${currentFileContent}\n\nPertanyaan: ${text}` : text;
+        
+        // Simpan ke Firestore (Target 2)
+        await addDoc(collection(db, "chats"), {
+            uid: auth.currentUser.uid,
+            sender: 'user',
+            msg: text,
+            time: serverTimestamp()
+        });
+
+        // Tampilkan Loading
+        appendUI('ai', '...sedang berpikir logis...');
+
+        try {
+            const isImg = text.startsWith('/img ');
+            const res = await fetch('/api/chat', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ 
+                    pesan: isImg ? text.replace('/img ', '') : fullMsg, 
+                    isImage: isImg,
+                    history: chatMemory.slice(-6) // Kirim 6 pesan terakhir sebagai memori (Target 1)
+                })
+            });
+            
+            const data = await res.json();
+            currentFileContent = ""; // Reset file context after send
+            document.getElementById('fileName').textContent = "";
+
+            const finalReply = data.type === 'image' ? `![img](${data.reply})` : data.reply;
+            
+            await addDoc(collection(db, "chats"), {
+                uid: auth.currentUser.uid,
+                sender: 'ai',
+                msg: finalReply,
+                time: serverTimestamp()
+            });
+
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    document.getElementById('sendBtn').onclick = send;
+    document.getElementById('msgInput').onkeypress = (e) => { if(e.key === 'Enter') send(); };
 
     function appendUI(sender, content) {
+        const flow = document.getElementById('chat-flow');
+        // Remove loading message if exists
+        const loadings = flow.querySelectorAll('.ai');
+        loadings.forEach(l => { if(l.textContent === '...sedang berpikir logis...') l.remove(); });
+
         const div = document.createElement('div');
         div.className = `bubble ${sender}`;
         
         if(sender === 'ai') {
             div.innerHTML = marked.parse(content);
-            div.querySelectorAll('pre code').forEach(el => hljs.highlightElement(el));
+            div.querySelectorAll('pre code').forEach(b => hljs.highlightElement(b));
         } else {
             div.textContent = content;
         }
