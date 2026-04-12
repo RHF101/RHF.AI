@@ -9,14 +9,14 @@ export default async function handler(req, res) {
     const { pesan, isImage } = req.body;
     const token = process.env.HUGGINGFACE_TOKEN;
 
-    // --- JALUR GAMBAR (STABIL) ---
+    // --- JALUR GAMBAR (Flux Pollinations) ---
     if (isImage === true || isImage === "true") {
       const seed = Math.floor(Math.random() * 999999);
       const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(pesan)}?width=1024&height=1024&nologo=true&seed=${seed}&model=flux`;
       return res.status(200).json({ type: "image", reply: imageUrl });
     }
 
-    // --- JALUR CHAT (LLAMA-3 STABLE) ---
+    // --- JALUR CHAT (Llama-3 Router) ---
     const response = await fetch(
       "https://router.huggingface.co/models/meta-llama/Meta-Llama-3-8B-Instruct",
       {
@@ -25,7 +25,10 @@ export default async function handler(req, res) {
           "Content-Type": "application/json"
         },
         method: "POST",
-        body: JSON.stringify({ inputs: pesan }),
+        body: JSON.stringify({ 
+          inputs: pesan,
+          parameters: { wait_for_model: true } 
+        }),
       }
     );
 
@@ -34,11 +37,10 @@ export default async function handler(req, res) {
     if (Array.isArray(data) && data[0].generated_text) {
       return res.status(200).json({ type: "text", reply: data[0].generated_text.trim() });
     } else {
-      const errorMsg = data.error || "Model sedang loading, tunggu 10 detik.";
-      return res.status(200).json({ type: "text", reply: `INFO: ${errorMsg}` });
+      return res.status(200).json({ type: "text", reply: `INFO: ${data.error || "Model sedang booting, coba lagi."}` });
     }
 
   } catch (err) {
-    return res.status(200).json({ type: "text", reply: "SYSTEM: Gagal fetch ke Hugging Face. Cek Redeploy Vercel kamu, Dit!" });
+    return res.status(200).json({ type: "text", reply: "SYSTEM ERROR: Koneksi backend terputus." });
   }
 }
