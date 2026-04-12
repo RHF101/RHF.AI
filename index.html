@@ -20,11 +20,18 @@
         #chat-container::-webkit-scrollbar { width: 0px; }
         .message-in { animation: fadeInUp 0.4s ease forwards; }
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
-        .code-block { font-family: 'JetBrains Mono', monospace; font-size: 12px; background: #0d1117; padding: 15px; border-radius: 12px; border: 1px solid #30363d; margin: 10px 0; display: block; overflow-x: auto; color: #7ee787; line-height: 1.5; }
+        
+        /* Perbaikan Blok Kode */
+        .code-wrapper { position: relative; margin: 15px 0; border-radius: 12px; overflow: hidden; border: 1px solid #333; }
+        .code-header { background: #2d2d2d; padding: 8px 15px; display: flex; justify-content: space-between; align-items: center; font-size: 10px; font-family: 'JetBrains Mono'; color: #aaa; }
+        .code-block { font-family: 'JetBrains Mono', monospace; font-size: 12px; background: #1e1e1e; padding: 15px; display: block; overflow-x: auto; color: #7ee787; line-height: 1.6; white-space: pre; }
+        .copy-btn { background: #3b82f6; color: white; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        
         #overlay { background: rgba(0,0,0,0.7); display: none; position: fixed; inset: 0; z-index: 90; }
         .typing::after { content: '|'; animation: blink 0.7s infinite; }
         @keyframes blink { 50% { opacity: 0; } }
         .file-indicator { background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2); padding: 4px 10px; border-radius: 8px; font-size: 10px; color: #60a5fa; display: none; margin-bottom: 8px; }
+        .ai-text { white-space: pre-wrap; line-height: 1.6; }
     </style>
 </head>
 <body>
@@ -68,7 +75,7 @@
             <div class="p-4 bg-gradient-to-t from-black via-black to-transparent">
                 <div class="max-w-4xl mx-auto flex flex-col bg-[#0a0a0a] border border-white/5 rounded-[2rem] p-2 shadow-2xl">
                     <div id="file-preview" class="file-indicator mx-2 mt-2">
-                        <i class="fas fa-file-code mr-2"></i> <span id="file-name"></span>
+                        <i class="fas fa-file-alt mr-2"></i> <span id="file-name"></span>
                         <button onclick="clearFile()" class="ml-2 text-red-500"><i class="fas fa-times"></i></button>
                     </div>
                     <div class="flex items-end gap-2">
@@ -151,8 +158,10 @@
             if (!pesan && !attachedFileContent) return;
 
             appendMessage('user', pesan + (attachedFileContent ? "\n[File attached]" : ""));
+            const currentFile = attachedFileContent;
             input.value = '';
             input.style.height = 'auto';
+            clearFile();
 
             try {
                 const response = await fetch("/api/chat", {
@@ -162,23 +171,20 @@
                         pesan: pesan, 
                         isImage: isImageMode, 
                         history: historyChat,
-                        fileContent: attachedFileContent
+                        fileContent: currentFile
                     })
                 });
 
                 const data = await response.json();
-                clearFile();
-                
                 if (data.type === "image") {
                     appendImage(data.reply);
                     saveToFirestore(pesan, data.reply);
                 } else {
-                    typeWriter(data.reply);
+                    renderAIResponse(data.reply);
                     saveToFirestore(pesan, data.reply);
                 }
-
             } catch (err) {
-                appendMessage('ai', "SYSTEM CRASH: Neural link failed. Check your API Key or Vercel logs.");
+                appendMessage('ai', "SYSTEM CRASH: Neural link failed.");
             }
         }
 
@@ -189,8 +195,8 @@
             
             const inner = document.createElement('div');
             inner.className = sender === 'user' 
-                ? "bg-blue-600 text-white px-5 py-3 rounded-2xl rounded-tr-none text-[13px] max-w-[85%] shadow-xl shadow-blue-900/10" 
-                : "bg-[#0a0a0a] border border-white/10 text-slate-300 px-5 py-4 rounded-2xl rounded-tl-none text-[13px] max-w-[90%] whitespace-pre-wrap leading-relaxed";
+                ? "bg-blue-600 text-white px-5 py-3 rounded-2xl rounded-tr-none text-[13px] max-w-[85%] shadow-xl" 
+                : "bg-[#0a0a0a] border border-white/10 text-slate-300 px-5 py-4 rounded-2xl rounded-tl-none text-[13px] max-w-[90%] ai-text";
             
             inner.innerText = text;
             wrap.appendChild(inner);
@@ -200,36 +206,51 @@
             if (sender === 'user') historyChat.push({ role: 'user', content: text });
         }
 
-        function typeWriter(text) {
+        function renderAIResponse(text) {
             const container = document.getElementById('chat-container');
             const wrap = document.createElement('div');
             wrap.className = "flex justify-start message-in mb-4";
             
-            const isCode = text.includes('```');
             const inner = document.createElement('div');
-            inner.className = isCode 
-                ? "code-block w-full" 
-                : "bg-[#0a0a0a] border border-white/10 text-slate-300 px-5 py-4 rounded-2xl rounded-tl-none text-[13px] max-w-[90%] whitespace-pre-wrap leading-relaxed typing";
-            
+            inner.className = "w-full max-w-[95%] text-slate-300 text-[13px] ai-text typing";
             wrap.appendChild(inner);
             container.appendChild(wrap);
 
-            let i = 0;
-            const cleanText = text.replace(/```/g, ''); 
-            
-            function typing() {
-                if (i < cleanText.length) {
-                    inner.innerText += cleanText.charAt(i);
-                    i++;
+            const parts = text.split(/```/);
+            let partIdx = 0;
+
+            function processParts() {
+                if (partIdx < parts.length) {
+                    const content = parts[partIdx];
+                    if (partIdx % 2 === 1) { // Ini adalah bagian kode
+                        const codeContent = content.trim();
+                        const codeId = "code-" + Date.now();
+                        inner.innerHTML += `
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span>SOURCE CODE</span>
+                                    <span class="copy-btn" onclick="copyCode('${codeId}')">COPY</span>
+                                </div>
+                                <pre id="${codeId}" class="code-block">${codeContent}</pre>
+                            </div>`;
+                    } else { // Ini teks biasa
+                        inner.innerHTML += `<span>${content}</span>`;
+                    }
+                    partIdx++;
                     container.scrollTop = container.scrollHeight;
-                    setTimeout(typing, 5); 
+                    processParts();
                 } else {
                     inner.classList.remove('typing');
-                    if (isCode) inner.innerText = cleanText; // Ensure full code is shown correctly
                 }
             }
-            typing();
+            processParts();
             historyChat.push({ role: 'assistant', content: text });
+        }
+
+        function copyCode(id) {
+            const code = document.getElementById(id).innerText;
+            navigator.clipboard.writeText(code);
+            alert("Code Copied!");
         }
 
         function appendImage(url) {
@@ -237,7 +258,7 @@
             const wrap = document.createElement('div');
             wrap.className = "flex justify-start message-in mb-4";
             wrap.innerHTML = `<div class="bg-[#0a0a0a] p-2 rounded-2xl border border-white/10 max-w-[280px]">
-                <img src="${url}" class="rounded-xl w-full shadow-2xl border border-white/5" onerror="this.src='https://via.placeholder.com/300?text=Render+Failed'">
+                <img src="${url}" class="rounded-xl w-full shadow-2xl">
             </div>`;
             container.appendChild(wrap);
             container.scrollTop = container.scrollHeight;
@@ -256,9 +277,7 @@
             await db.collection('chats').doc(uid).collection('sessions').doc(currentChatId).collection('messages').add({
                 user: u, ai: a, time: firebase.firestore.FieldValue.serverTimestamp()
             });
-            await db.collection('chats').doc(uid).collection('sessions').doc(currentChatId).update({
-                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-            });
+            await db.collection('chats').doc(uid).collection('sessions').doc(currentChatId).update({ lastUpdated: firebase.firestore.FieldValue.serverTimestamp() });
             loadChatList();
         }
 
@@ -269,7 +288,7 @@
             list.innerHTML = '';
             snapshot.forEach(doc => {
                 const btn = document.createElement('button');
-                btn.className = "w-full text-left p-4 hover:bg-white/5 rounded-2xl text-[11px] text-slate-400 truncate mb-1 border border-transparent hover:border-white/10 flex items-center gap-3 transition-all";
+                btn.className = "w-full text-left p-4 hover:bg-white/5 rounded-2xl text-[11px] text-slate-400 truncate mb-1 border border-transparent hover:border-white/10 flex items-center gap-3";
                 btn.innerHTML = `<i class="far fa-comment-alt opacity-30 text-[10px]"></i> <span>${doc.data().title || 'New Log'}</span>`;
                 btn.onclick = () => loadMessages(doc.id);
                 list.appendChild(btn);
@@ -279,19 +298,17 @@
         async function loadMessages(id) {
             currentChatId = id;
             const container = document.getElementById('chat-container');
-            container.innerHTML = '<div class="flex justify-center py-20"><div class="animate-spin rounded-full h-8 w-8 border-t-2 border-blue-500"></div></div>';
+            container.innerHTML = '';
             historyChat = [];
             if(window.innerWidth < 1024) toggleSidebar();
-
             const snapshot = await db.collection('chats').doc(auth.currentUser.uid).collection('sessions').doc(id).collection('messages').orderBy('time').get();
-            container.innerHTML = '';
             snapshot.forEach(doc => {
                 const data = doc.data();
                 appendMessage('user', data.user);
                 if (data.ai.includes('pollinations.ai') || data.ai.includes('http')) { 
                     appendImage(data.ai); 
                 } else { 
-                    appendMessage('ai', data.ai); 
+                    renderAIResponse(data.ai); 
                 }
             });
         }
