@@ -1,5 +1,5 @@
 export default async function handler(req, res) {
-  // Biar browser nggak blokir (CORS)
+  // Biar browser nggak blokir
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -8,42 +8,46 @@ export default async function handler(req, res) {
   
   try {
     const { pesan, isImage } = req.body;
-    const token = process.env.HUGGINGFACE_TOKEN;
+    const apiKey = process.env.GROQ_API_KEY;
 
-    // --- FITUR GAMBAR (FLUX - TETAP PAKAI JALUR LAMA) ---
+    // --- JALUR GAMBAR (FLUX) ---
     if (isImage === true || isImage === "true") {
       const urlImg = `https://image.pollinations.ai/prompt/${encodeURIComponent(pesan)}?width=1024&height=1024&nologo=true&model=flux`;
       return res.status(200).json({ type: "image", reply: urlImg });
     }
 
-    // --- FITUR CHAT (MISTRAL VIA ROUTER BARU) ---
-    const response = await fetch(
-      "https://router.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.3",
-      {
-        headers: { 
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
-        method: "POST",
-        body: JSON.stringify({ 
-          inputs: pesan,
-          parameters: { max_new_tokens: 1000 },
-          options: { wait_for_model: true }
-        }),
-      }
-    );
+    // --- JALUR CHAT (GROQ + LLAMA 3.1 70B) ---
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: "llama-3.1-70b-versatile",
+        messages: [
+          { 
+            role: "system", 
+            content: "Kamu adalah RHF-AI Omni-Core v2. Kamu asisten teknik cerdas buatan Radit Tiya. Kamu sangat ahli dalam koding, modding Android, dan system architecture. Berikan jawaban yang sangat teliti, detail, dan profesional dalam bahasa Indonesia." 
+          },
+          { role: "user", content: pesan }
+        ],
+        temperature: 0.6,
+        max_tokens: 4096
+      })
+    });
 
     const data = await response.json();
 
-    if (Array.isArray(data) && data[0].generated_text) {
-      return res.status(200).json({ type: "text", reply: data[0].generated_text.trim() });
+    // Validasi data dari Groq
+    if (data.choices && data.choices[0].message) {
+      const reply = data.choices[0].message.content;
+      return res.status(200).json({ type: "text", reply: reply });
     } else {
-      const errorDetail = data.error || "Gagal sinkronisasi.";
-      return res.status(200).json({ type: "text", reply: `INFO AI: ${errorDetail}` });
+      return res.status(200).json({ type: "text", reply: "INFO: Groq sedang penuh atau API Key salah." });
     }
 
   } catch (err) {
-    // Menampilkan error asli biar kita bisa lacak kalau masih gagal
-    return res.status(200).json({ type: "text", reply: `CRASH LOG: ${err.message}` });
+    return res.status(200).json({ type: "text", reply: `ERROR SISTEM: ${err.message}` });
   }
 }
