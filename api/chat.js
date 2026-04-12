@@ -7,7 +7,6 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   
   try {
-    // Penambahan history dan fileContent pada body request
     const { pesan, isImage, history, fileContent } = req.body;
     const apiKey = process.env.GROQ_API_KEY;
 
@@ -21,26 +20,20 @@ export default async function handler(req, res) {
       return res.status(200).json({ type: "image", reply: urlImg });
     }
 
-    // 3. JALUR CHAT (Optimalisasi Fitur Baru)
+    // 3. JALUR CHAT (Optimalisasi Fitur Teks & Dokumen)
     let messages = [
       { 
         role: "system", 
         content: `Kamu adalah RHF-AI Omni-Core v2. 
-        Identitas: Asisten cerdas, adaptif, dan hidup buatan Radit Tiya (System Architect).
+        Identitas: Asisten cerdas dan hidup buatan Radit Tiya (System Architect).
         
-        KEMAMPUAN KHUSUS:
-        - Memory: Ingat konteks lama dan identitas user.
-        - Advanced Coding: Ciptakan kode yang modular, rapi, berstruktur tinggi, dan efisien.
-        - Debugging: Cek potensi error secara otomatis sebelum memberikan kode.
-        - Reasoning: Pecahkan masalah langkah demi langkah (Multi-step thinking).
-        - File Understanding: Analisa data dari file teks/kode yang dikirim user.
-        
-        ATURAN FORMAT OUTPUT:
-        - Gunakan Markdown (Bold, Lists) dengan spasi antar bagian yang jelas.
-        - WAJIB gunakan Code Blocks (\`\`\`) lengkap dengan nama bahasa pemrogramannya.
-        - Struktur Jawaban: Analisa Masalah > Solusi/Kode > Penjelasan Fitur > Cara Implementasi.
-        - Pastikan kode yang dihasilkan bersifat "Ready to Use" (Siap pakai).
-        - Berikan jarak (spacing) yang cukup antar paragraf agar enak dibaca.`
+        PROTOKOL ANALISA & CODING:
+        - Jika ada [DATA FILE], baca dan pahami isinya secara mendalam sebagai referensi utama.
+        - Bedakan teks obrolan dengan skrip. Gunakan teks biasa untuk bicara.
+        - WAJIB gunakan Code Blocks (\`\`\`) untuk semua unit kode agar terpisah dari penjelasan.
+        - Tambahkan baris baru (spacing) antar paragraf agar jawaban tidak menumpuk.
+        - Pastikan kode modular, bersih, berstruktur tinggi, dan siap pakai.
+        - Alur Jawaban: Analisa Masalah > Solusi/Kode > Penjelasan Teknis.`
       }
     ];
 
@@ -54,10 +47,10 @@ export default async function handler(req, res) {
       });
     }
 
-    // Menggabungkan konteks File jika tersedia
+    // Perbaikan Logika Pembacaan Dokumen (Diberi delimiter agar AI fokus)
     let finalPrompt = pesan;
     if (fileContent) {
-      finalPrompt = `[DATA FILE ATTACHED]\n${fileContent}\n\n[USER REQUEST]\n${pesan}`;
+      finalPrompt = `[DATA FILE ATTACHED]\n---ISI DOKUMEN---\n${fileContent}\n---AKHIR DOKUMEN---\n\n[USER REQUEST]\n${pesan}`;
     }
 
     messages.push({ role: "user", content: finalPrompt });
@@ -71,9 +64,9 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         model: "llama-3.3-70b-versatile", 
         messages: messages,
-        temperature: 0.6, // Suhu optimal untuk keseimbangan logika dan kreativitas
+        temperature: 0.4, // Diturunkan sedikit agar lebih teliti pada dokumen dan kode
         max_tokens: 4096,
-        top_p: 0.95
+        top_p: 0.9
       })
     });
 
