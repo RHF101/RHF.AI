@@ -14,7 +14,7 @@ export default async function handler(req, res) {
       return res.status(200).json({ type: "image", reply: urlImg });
     }
 
-    // Pakai model Llama-3.3-70b (Versi terbaru & paling stabil di Groq)
+    // PAKAI MODEL INI (Paling Stabil di Groq)
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -22,9 +22,9 @@ export default async function handler(req, res) {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "llama-3.3-70b-specdec", 
+        model: "llama3-70b-8192", 
         messages: [
-          { role: "system", content: "Kamu adalah RHF-AI Omni-Core v2. Kamu adalah asisten teknis cerdas buatan Radit Tiya, seorang System Architect berbakat berumur 13 tahun." },
+          { role: "system", content: "Kamu adalah RHF-AI Omni-Core v2. Kamu adalah asisten teknis cerdas buatan Radit Tiya." },
           { role: "user", content: pesan }
         ]
       })
@@ -33,7 +33,8 @@ export default async function handler(req, res) {
     const data = await response.json();
 
     if (data.error) {
-      return res.status(200).json({ type: "text", reply: `Pesan Groq: ${data.error.message}` });
+      // Biar kita tau kalau model ini rewel juga
+      return res.status(200).json({ type: "text", reply: `INFO GROQ: ${data.error.message}` });
     }
 
     const reply = data.choices[0].message.content;
