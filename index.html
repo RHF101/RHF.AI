@@ -16,6 +16,7 @@
             --ai-bubble: #21262d;
             --text-color: #e6edf3;
             --accent: #58a6ff;
+            --border-code: #30363d;
         }
 
         body {
@@ -28,18 +29,28 @@
             height: 100vh;
         }
 
-        /* Header Area */
+        /* Login Screen (Tetap Ada) */
+        #login-screen {
+            position: fixed;
+            inset: 0;
+            background: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+        }
+
+        /* Container Chat */
         header {
             padding: 15px;
             background: var(--chat-bg);
             text-align: center;
             border-bottom: 1px solid #30363d;
-            font-weight: bold;
-            letter-spacing: 1px;
             color: var(--accent);
+            font-weight: bold;
         }
 
-        /* Chat Container */
         #chat-container {
             flex: 1;
             overflow-y: auto;
@@ -49,42 +60,44 @@
             gap: 15px;
         }
 
-        .message {
-            max-width: 85%;
-            padding: 12px 16px;
-            border-radius: 15px;
-            line-height: 1.5;
-            word-wrap: break-word;
-        }
-
-        .user-message {
-            align-self: flex-end;
-            background-color: var(--user-bubble);
-            border-bottom-right-radius: 2px;
-        }
-
-        .ai-message {
-            align-self: flex-start;
-            background-color: var(--ai-bubble);
-            border-bottom-left-radius: 2px;
-            border: 1px solid #30363d;
-        }
-
-        /* Styling Kode di dalam Chat */
+        /* PEMBATAS & KOTAK KODE (Anti Tembus) */
         pre {
             background: #000 !important;
-            padding: 12px;
-            border-radius: 8px;
+            padding: 15px;
+            border-radius: 10px;
             overflow-x: auto;
-            margin: 10px 0;
+            margin: 15px 0;
+            border: 2px solid var(--border-code); /* Pembatas Tegas */
+            position: relative;
+            display: block;
+            max-width: 100%;
+            white-space: pre; /* Menjaga struktur kode */
         }
 
         code {
             font-family: 'Consolas', monospace;
             font-size: 0.9em;
+            color: #d1d5db;
         }
 
-        /* Input Area */
+        .message {
+            max-width: 85%;
+            padding: 12px 16px;
+            border-radius: 15px;
+            line-height: 1.6;
+        }
+
+        .user-message { align-self: flex-end; background-color: var(--user-bubble); }
+        .ai-message { align-self: flex-start; background-color: var(--ai-bubble); border: 1px solid #30363d; }
+
+        /* Fitur Gambar */
+        .ai-image {
+            max-width: 100%;
+            border-radius: 10px;
+            margin-top: 10px;
+            border: 2px solid var(--accent);
+        }
+
         .input-area {
             padding: 20px;
             background: var(--chat-bg);
@@ -93,122 +106,92 @@
             border-top: 1px solid #30363d;
         }
 
-        input[type="text"] {
-            flex: 1;
-            background: #0d1117;
-            border: 1px solid #30363d;
-            padding: 12px;
-            border-radius: 8px;
-            color: white;
-            outline: none;
-        }
-
-        input[type="text"]:focus {
-            border-color: var(--accent);
-        }
-
-        button {
-            background: var(--accent);
-            color: white;
-            border: none;
-            padding: 0 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        button:hover {
-            opacity: 0.8;
-        }
-
-        /* Loading Animation */
-        .typing {
-            font-style: italic;
-            font-size: 0.8em;
-            color: #8b949e;
-            margin-bottom: 10px;
-            display: none;
-        }
+        input { flex: 1; background: #0d1117; border: 1px solid #30363d; padding: 12px; border-radius: 8px; color: white; }
+        button { background: var(--accent); color: white; border: none; padding: 0 20px; border-radius: 8px; cursor: pointer; }
     </style>
 </head>
 <body>
 
-<header>RHF-AI OMNI-CORE v2</header>
-
-<div id="chat-container">
-    <div class="message ai-message">Halo Radit! RHF-AI Omni-Core v2 aktif. Apa yang mau kita modding hari ini?</div>
+<div id="login-screen">
+    <h2>RHF-AI ACCESS</h2>
+    <input type="password" id="passInput" placeholder="Enter System Key...">
+    <button onclick="checkLogin()" style="margin-top: 10px; height: 40px;">LOGIN</button>
 </div>
 
-<div id="loading-status" class="typing" style="padding-left: 20px;">RHF-AI sedang berpikir...</div>
+<header>RHF-AI OMNI-CORE v2</header>
+
+<div id="chat-container"></div>
 
 <div class="input-area">
-    <input type="text" id="userInput" placeholder="Ketik pesan atau perintah sistem..." onkeypress="handleKeyPress(event)">
+    <input type="text" id="userInput" placeholder="Tanya atau ketik '/img [prompt]' untuk gambar..." onkeypress="if(event.key==='Enter') sendMessage()">
     <button onclick="sendMessage()">KIRIM</button>
 </div>
 
 <script>
-    const chatContainer = document.getElementById('chat-container');
-    const loadingStatus = document.getElementById('loading-status');
-
-    function handleKeyPress(e) {
-        if (e.key === 'Enter') sendMessage();
+    // Sistem Login
+    function checkLogin() {
+        const pass = document.getElementById('passInput').value;
+        if(pass === "radit123") { // Ganti password sesukamu
+            document.getElementById('login-screen').style.display = 'none';
+        } else {
+            alert("Akses Ditolak!");
+        }
     }
 
     async function sendMessage() {
         const input = document.getElementById('userInput');
         const text = input.value.trim();
-        
         if (!text) return;
 
-        // Tampilkan pesan User
         appendMessage('user', text);
         input.value = '';
-        
-        // Munculkan loading
-        loadingStatus.style.display = 'block';
-        scrollToBottom();
+
+        // Deteksi Perintah Gambar
+        let isImg = false;
+        let promptPesan = text;
+        if(text.startsWith('/img ')) {
+            isImg = true;
+            promptPesan = text.replace('/img ', '');
+        }
 
         try {
             const response = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ pesan: text })
+                body: JSON.stringify({ pesan: promptPesan, isImage: isImg })
             });
 
             const data = await response.json();
             
-            // Sembunyikan loading dan tampilkan balasan AI
-            loadingStatus.style.display = 'none';
-            appendMessage('ai', data.reply);
-            
-        } catch (error) {
-            loadingStatus.style.display = 'none';
-            appendMessage('ai', '🚀 **CRASH:** Koneksi terputus. Cek Vercel Logs.');
+            if(data.type === "image") {
+                appendImage(data.reply);
+            } else {
+                appendMessage('ai', data.reply);
+            }
+        } catch (e) {
+            appendMessage('ai', 'Error transmisi!');
         }
     }
 
     function appendMessage(sender, content) {
-        const msgDiv = document.createElement('div');
-        msgDiv.className = `message ${sender}-message`;
-        
-        if (sender === 'ai') {
-            // Render Markdown dan Highlight Code
-            msgDiv.innerHTML = marked.parse(content);
-            msgDiv.querySelectorAll('pre code').forEach((block) => {
-                hljs.highlightElement(block);
-            });
+        const div = document.createElement('div');
+        div.className = `message ${sender}-message`;
+        if(sender === 'ai') {
+            div.innerHTML = marked.parse(content);
+            div.querySelectorAll('pre code').forEach((el) => hljs.highlightElement(el));
         } else {
-            msgDiv.textContent = content;
+            div.textContent = content;
         }
-
-        chatContainer.appendChild(msgDiv);
-        scrollToBottom();
+        document.getElementById('chat-container').appendChild(div);
+        document.getElementById('chat-container').scrollTop = document.getElementById('chat-container').scrollHeight;
     }
 
-    function scrollToBottom() {
-        chatContainer.scrollTop = chatContainer.scrollHeight;
+    function appendImage(url) {
+        const img = document.createElement('img');
+        img.src = url;
+        img.className = 'ai-image';
+        document.getElementById('chat-container').appendChild(img);
     }
 </script>
-
 </body>
 </html>
