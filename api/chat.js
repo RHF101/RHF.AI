@@ -7,7 +7,9 @@ export default async function handler(req, res) {
   
   try {
     const { pesan, isImage, history, fileContent } = req.body;
-    const geminiKey = process.env.GEMINI_API_KEY;
+    
+    // MENGGUNAKAN API KEY BARU KAMU
+    const geminiKey = "AIzaSyBgJf0Q7tTrJMRGLH_tv8WfvWHYDONR1pw";
     const groqKey = process.env.GROQ_API_KEY;
 
     if (!pesan && !fileContent) {
@@ -20,8 +22,7 @@ export default async function handler(req, res) {
       return res.status(200).json({ type: "image", reply: urlImg });
     }
 
-    // --- STEP 1: GEMINI FLASH SEBAGAI ORCHESTRATOR (MANAGER) ---
-    // Flash digunakan di sini karena sangat cepat untuk klasifikasi
+    // --- STEP 1: GEMINI FLASH SEBAGAI ORCHESTRATOR ---
     const checkRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -30,7 +31,11 @@ export default async function handler(req, res) {
       })
     });
     const checkData = await checkRes.json();
-    const intent = checkData.candidates[0].content.parts[0].text.trim().toUpperCase();
+    
+    // Safety check jika Gemini Flash gagal analisa
+    const intent = (checkData.candidates && checkData.candidates[0].content.parts[0].text) 
+                   ? checkData.candidates[0].content.parts[0].text.trim().toUpperCase() 
+                   : "CHAT";
 
     // Persiapan History untuk Gemini
     let geminiContents = [];
@@ -38,7 +43,7 @@ export default async function handler(req, res) {
       history.slice(-10).forEach(chat => {
         geminiContents.push({
           role: chat.role === 'user' ? 'user' : 'model',
-          parts: [{ text: chat.content }]
+          parts: [{ text: chat.content || "" }]
         });
       });
     }
@@ -46,7 +51,6 @@ export default async function handler(req, res) {
     geminiContents.push({ role: 'user', parts: [{ text: finalInput }] });
 
     // --- STEP 2: EKSEKUSI BERDASARKAN INTENT ---
-    
     if (intent === "CODING") {
       // MENGGUNAKAN GEMINI 1.5 PRO (SPESIALIS CODING)
       const responsePro = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${geminiKey}`, {
@@ -55,9 +59,9 @@ export default async function handler(req, res) {
         body: JSON.stringify({
           contents: geminiContents,
           systemInstruction: { 
-            parts: [{ text: "Kamu adalah RHF-AI PRO CODER. Tugasmu menulis kode utuh, fungsional, indentasi 4 spasi yang sangat rapi, dan dilarang keras memotong kode. Gunakan logika arsitektur sistem yang kuat." }] 
+            parts: [{ text: "Kamu adalah RHF-AI PRO CODER. Tulis kode utuh, fungsional, indentasi 4 spasi, rapi, dan jangan dipotong." }] 
           },
-          generationConfig: { temperature: 0.1, maxOutputTokens: 8192 } // Temp 0.1 agar sangat presisi
+          generationConfig: { temperature: 0.1, maxOutputTokens: 8192 }
         })
       });
       const dataPro = await responsePro.json();
@@ -65,28 +69,37 @@ export default async function handler(req, res) {
       return res.status(200).json({ type: "text", reply: reply });
 
     } else {
-      // MENGGUNAKAN GROQ/LLAMA (CHAT CASUAL)
-      // Jika Groq limit, akan otomatis dicover oleh Gemini Flash di blok catch
+      // --- EKSEKUSI CHAT BIASA (GROQ) ---
+      let groqMessages = [{ role: "system", content: "Kamu adalah RHF-AI. Jawab singkat, asik, dan manusiawi." }];
+      
+      if (history && Array.isArray(history)) {
+        const historySlice = history.slice(-5).map(c => ({
+          role: c.role === 'user' ? 'user' : 'assistant',
+          content: c.content || ""
+        }));
+        groqMessages = [...groqMessages, ...historySlice];
+      }
+      
+      groqMessages.push({ role: "user", content: pesan });
+
       const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
         headers: { "Authorization": `Bearer ${groqKey}`, "Content-Type": "application/json" },
         body: JSON.stringify({
           model: "llama-3.3-70b-versatile",
-          messages: [
-            { role: "system", content: "Kamu adalah RHF-AI. Jawab singkat, asik, dan manusiawi." },
-            ...history.slice(-5).map(c => ({ role: c.role === 'user' ? 'user' : 'assistant', content: c.content })),
-            { role: "user", content: pesan }
-          ],
+          messages: groqMessages,
           temperature: 0.8
         })
       });
       const dataGroq = await groqRes.json();
+      
       if (dataGroq.error) throw new Error("GROQ_LIMIT");
       return res.status(200).json({ type: "text", reply: dataGroq.choices[0].message.content });
     }
 
   } catch (err) {
-    // FALLBACK TERAKHIR KE GEMINI FLASH
-    return res.status(200).json({ type: "text", reply: `[SYSTEM AUTO-RECOVER] Sedang ada gangguan teknis, tapi saya tetap aktif. Ada yang bisa dibantu?` });
+    console.error(err);
+    return res.status(200).json({ type: "text", reply: `[SISTEM ERROR] Terjadi masalah: ${err.message}. Silakan coba lagi nanti.` });
   }
-        }
+          }
+          
