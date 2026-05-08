@@ -1,114 +1,132 @@
 export default async function handler(req, res) {
+    const {
+        GEMINI_API_KEY: geminiKey,
+        GROQ_API_KEY: groqKey,
+        TAVILY_API_KEY: tavilyKey
+    } = process.env;
+
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
     if (req.method === 'OPTIONS') return res.status(200).end();
-  
+
+    async function fetchWithTimeout(url, options = {}, timeout = 8500) {
+        const controller = new AbortController();
+        const id = setTimeout(() => controller.abort(), timeout);
+        try {
+            const response = await fetch(url, { ...options, signal: controller.signal });
+            clearTimeout(id);
+            return response;
+        } catch (e) {
+            clearTimeout(id);
+            throw e;
+        }
+    }
+
     try {
         const { pesan, mode } = req.body;
-        const geminiKey = process.env.GEMINI_API_KEY; 
-        const groqKey = process.env.GROQ_API_KEY;
-        const tavilyKey = process.env.TAVILY_API_KEY;
-        
-        // Endpoint Firebase
-        const fbPerintahUrl = "https://rhf-confrims-default-rtdb.firebaseio.com/perintah_ai.json";
-        const fbLogUrl = "https://rhf-confrims-default-rtdb.firebaseio.com/logs_perubahan.json";
+        if (!pesan) return res.status(200).json({ reply: "Core RHF-AI: Standby." });
+        if (!geminiKey || !groqKey) throw new Error("API_KEY_MISSING");
 
-        if (!pesan) return res.status(200).json({ reply: "Status: Standby..." });
+        const fbUrl = "https://rhf-confrims-default-rtdb.firebaseio.com/perintah_ai.json";
+        const logUrl = "https://rhf-confrims-default-rtdb.firebaseio.com/logs_perubahan.json";
 
-        // --- STEP 1: ORCHESTRATOR ---
-        const brainRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                contents: [{ role: 'user', parts: [{ text: `Analisa: "${pesan}". Balas 1 kata: SEARCH, RAKIT, HISTORY, atau CHAT.` }] }]
-            })
-        });
-        const brainData = await brainRes.json();
-        let intent = mode ? mode.toUpperCase() : (brainData.candidates?.[0].content.parts[0].text.trim().toUpperCase() || "CHAT");
+        // --- STAGE 1: SECURE ORCHESTRATOR ---
+        let intent = mode?.toUpperCase() || "CHAT";
 
-        // --- STEP 2: LOGIKA EKSEKUSI ---
-
-        // A. JALUR HISTORY (MELIHAT CATATAN PERUBAHAN)
-        if (intent === "HISTORY") {
-            const logRes = await fetch(fbLogUrl);
-            const logs = await logRes.json();
-            const logString = JSON.stringify(logs);
-            
-            const historyRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`, {
+        if (!mode) {
+            const orchRes = await fetchWithTimeout(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    contents: [{ role: 'user', parts: [{ text: `Ini adalah data log perubahan map: ${logString}. Rangkum perubahan apa saja yang terjadi beberapa jam terakhir untuk menjawab: ${pesan}` }] }]
+                    contents: [{ role: 'user', parts: [{ text: `Analisa: "${pesan}". Pilih: RAKIT, SEARCH, atau CHAT. Balas 1 kata.` }] }]
                 })
             });
-            const historyData = await historyRes.json();
-            return res.status(200).json({ type: "text", reply: historyData.candidates[0].content.parts[0].text });
+            const orchData = await orchRes.json();
+            const rawText = orchData.candidates?.[0]?.content?.parts?.[0]?.text?.toUpperCase() || "";
+            intent = rawText.includes("RAKIT") ? "RAKIT" : rawText.includes("SEARCH") ? "SEARCH" : "CHAT";
         }
 
-        // B. JALUR RAKIT & CATAT (MASTER CONTROLLER)
+        // --- STAGE 2: ROBUST EXECUTION ---
+
         if (intent === "RAKIT") {
-            const builderRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${geminiKey}`, {
+            const memoryRes = await fetchWithTimeout(`${logUrl}?orderBy="$key"&limitToLast=10`).catch(() => null);
+            const memory = memoryRes?.ok ? await memoryRes.json() : {};
+
+            const builderRes = await fetchWithTimeout(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${geminiKey}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     contents: [{ role: 'user', parts: [{ text: pesan }] }],
-                    systemInstruction: { parts: [{ text: `Kamu MASTER CONTROLLER. Balas HANYA JSON: {"nodes": [{"name": "obj", "file": "nama_file", "pos": [0,0,0], "rot": [0,0,0], "scale": [1,1,1], "script": ""}]}` }] }
+                    systemInstruction: { 
+                        parts: [{ text: `MASTER GODOT. Konteks: ${JSON.stringify(memory)}. Balas HANYA JSON: {"thought": "...", "nodes": [...]}.` }] 
+                    }
                 })
             });
-            const builderData = await builderRes.json();
-            let rawJson = builderData.candidates[0].content.parts[0].text.replace(/```json|```/g, "").trim();
+            const bData = await builderRes.json();
+            const content = bData.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (!content) throw new Error("AI_NO_RESPONSE");
+
+            let parsed;
+            try {
+                const cleanJson = content.replace(/```json|```/g, "").trim();
+                parsed = JSON.parse(cleanJson);
+            } catch (pErr) {
+                throw new Error("JSON_PARSE_FAILED: AI memberikan format ilegal.");
+            }
+
+            const thought = parsed.thought || "Mengeksekusi perintah arsitektur.";
             
-            // 1. Kirim Perintah ke Godot
-            await fetch(fbPerintahUrl, { method: "PUT", body: rawJson });
+            // Parallel Writes with individual error handling
+            await Promise.all([
+                fetch(fbUrl, { method: "PUT", body: JSON.stringify({ nodes: parsed.nodes || [] }) }).catch(e => console.error("FB_ERR:", e)),
+                fetch(logUrl, { 
+                    method: "POST", 
+                    body: JSON.stringify({ ts: Date.now(), action: pesan, logic: thought }) 
+                }).catch(e => console.error("LOG_ERR:", e))
+            ]);
 
-            // 2. CATAT PERUBAHAN KE LOG (DENGAN WAKTU)
-            const logData = {
-                waktu: new Date().toLocaleString("id-ID", { timeZone: "Asia/Jakarta" }),
-                deskripsi: pesan,
-                detail: JSON.parse(rawJson)
-            };
-            await fetch(fbLogUrl, { 
-                method: "POST", // POST akan menambah list baru, bukan menindih
-                body: JSON.stringify(logData) 
-            });
-
-            return res.status(200).json({ type: "rakit", reply: "Perubahan telah diterapkan dan dicatat dalam memori.", data: JSON.parse(rawJson) });
+            return res.status(200).json({ type: "rakit", reply: `🛠️ **Action:** ${thought}`, data: parsed.nodes });
         }
 
-        // C. JALUR SEARCH (INTERNET)
         if (intent === "SEARCH") {
-            const searchRes = await fetch('https://api.tavily.com/search', {
+            if (!tavilyKey) throw new Error("TAVILY_KEY_MISSING");
+            
+            const sRes = await fetchWithTimeout('https://api.tavily.com/search', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ api_key: tavilyKey, query: pesan })
             });
-            const searchData = await searchRes.json();
-            const finalRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`, {
+            const sData = await sRes.json();
+            const results = sData.results?.map(r => r.content).join("\n") || "Info tidak ditemukan.";
+            
+            const sumRes = await fetchWithTimeout(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    contents: [{ role: 'user', parts: [{ text: `Info: ${JSON.stringify(searchData.results)}. Jawab: ${pesan}` }] }]
+                    contents: [{ role: 'user', parts: [{ text: `Data: ${results}\n\nJawab: ${pesan}` }] }]
                 })
             });
-            const finalData = await finalRes.json();
-            return res.status(200).json({ type: "text", reply: finalData.candidates[0].content.parts[0].text });
+            const sumData = await sumRes.json();
+            return res.status(200).json({ reply: sumData.candidates?.[0]?.content?.parts?.[0]?.text || "Gagal merangkum data." });
         }
 
-        // D. JALUR CHAT BIASA (GROQ)
-        const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        // DEFAULT: GROQ
+        const gRes = await fetchWithTimeout("https://api.groq.com/openai/v1/chat/completions", {
             method: "POST",
             headers: { "Authorization": `Bearer ${groqKey}`, "Content-Type": "application/json" },
             body: JSON.stringify({
                 model: "llama-3.3-70b-versatile",
-                messages: [{ role: "system", content: "Kamu RHF-AI." }, { role: "user", content: pesan }]
+                messages: [{ role: "user", content: pesan }],
+                temperature: 0.6
             })
         });
-        const dataGroq = await groqRes.json();
-        return res.status(200).json({ type: "text", reply: dataGroq.choices[0].message.content });
+        const gData = await gRes.json();
+        return res.status(200).json({ reply: gData.choices?.[0]?.message?.content || "Otak cadangan tidak merespon." });
 
     } catch (err) {
-        return res.status(200).json({ reply: `[SISTEM ERROR]: ${err.message}` });
+        console.error("Master Error:", err);
+        return res.status(200).json({ reply: `⚠️ **System Error:** ${err.message}` });
     }
-}
+                                            }
