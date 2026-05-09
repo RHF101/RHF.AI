@@ -1,11 +1,7 @@
 {
   "name": "rhf-ai",
   "version": "1.0.0",
-  "type": "module",
-  "engines": {
-    "node": "20.x"
-  },
   "dependencies": {
-    "node-fetch": "^3.3.2"
+    "axios": "^1.6.0"
   }
 }
