@@ -1,58 +1,61 @@
-export default async function handler(req, res) {
-    const groqKey = process.env.GROQ_API_KEY;
-    const fbUrl = "https://rhf-confrims-default-rtdb.firebaseio.com/perintah_ai.json";
+const axios = require('axios');
+const FIREBASE_URL = "https://rhf-confrims-default-rtdb.firebaseio.com/perintah_ai.json";
 
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-    if (req.method === 'OPTIONS') return res.status(200).end();
+class AIMasterBuilder {
+    constructor() {
+        this.nodes = [];
+    }
 
-    try {
-        const { pesan } = req.body;
-        if (!pesan) return res.status(200).json({ reply: "Sistem Standby." });
+    // Fungsi untuk meriset area kerja
+    reset() { this.nodes = []; }
 
-        // OTAK UTAMA: Llama 3.3 70B (Setara Claude versi Gratis & Cepat)
-        const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-            method: "POST",
-            headers: { 
-                "Authorization": `Bearer ${groqKey}`,
-                "Content-Type": "application/json" 
-            },
-            body: JSON.stringify({
-                model: "llama-3.3-70b-versatile",
-                messages: [
-                    { 
-                        role: "system", 
-                        content: "Kamu AI Arsitek Game. Jika user minta rakit/bangun, balas HANYA JSON murni. Jika tanya biasa, jawab dengan cerdas. Format JSON: {\"nodes\": [{\"name\": \"...\", \"file\": \"...\", \"pos\": [0,0,0], \"rot\": [0,0,0], \"scale\": [1,1,1], \"script\": \"\"}]}" 
-                    },
-                    { role: "user", content: pesan }
-                ],
-                temperature: 0.3
-            })
-        });
-
-        const data = await response.json();
-        const output = data.choices?.[0]?.message?.content || "";
-
-        if (!output) throw new Error("AI_KOSONG");
-
-        // DETEKSI OTOMATIS: Apakah ini instruksi rakit atau chat?
-        if (output.includes("{") && output.includes("nodes")) {
-            const cleanJson = output.replace(/```json|```/g, "").trim();
+    // Fungsi Cerdas: Membuat Barisan (Array)
+    buatBarisan(tipe, jumlah, jarak, sumbu = 'x') {
+        for (let i = 0; i < jumlah; i++) {
+            let pos = [0, 1, 0];
+            if (sumbu === 'x') pos[0] = i * jarak;
+            if (sumbu === 'z') pos[2] = i * -jarak;
             
-            // Kirim ke Godot (Firebase)
-            await fetch(fbUrl, { method: "PUT", body: cleanJson });
-            
-            return res.status(200).json({ 
-                reply: "🏗️ Konstruksi berhasil dikirim ke Godot!", 
-                data: JSON.parse(cleanJson) 
+            this.nodes.push({
+                file: tipe,
+                pos: pos,
+                scale: [1, 1, 1]
             });
         }
+    }
 
-        // Kalau cuma ngobrol biasa
-        return res.status(200).json({ reply: output });
+    // Fungsi Cerdas: Membuat Ruangan/Rumah
+    buatStruktur(nama) {
+        if (nama === "benteng") {
+            // Lantai
+            this.nodes.push({ file: "lantai", pos: [0, 0, 0], scale: [2, 1, 2] });
+            // 4 Pilar di sudut
+            const sudut = [[-4, 2, -4], [4, 2, -4], [-4, 2, 4], [4, 2, 4]];
+            sudut.forEach(s => {
+                this.nodes.push({ file: "tabung", pos: s, scale: [1, 4, 1] });
+            });
+            // Atap flat
+            this.nodes.push({ file: "kotak", pos: [0, 4.5, 0], scale: [5, 0.2, 5] });
+        }
+    }
 
-    } catch (err) {
-        return res.status(200).json({ reply: "⚠️ Gangguan Otak: " + err.message });
+    async kirim() {
+        try {
+            await axios.put(FIREBASE_URL, { nodes: this.nodes });
+            console.log("✅ Master Arsitek: Struktur Berhasil Dikirim!");
+        } catch (e) {
+            console.error("❌ Koneksi Gagal:", e.message);
+        }
     }
 }
+
+// --- CARA PERINTAH SI MASTER ---
+const Jarvis = new AIMasterBuilder();
+
+// Contoh 1: Bikin Benteng Otomatis
+Jarvis.buatStruktur("benteng");
+
+// Contoh 2: Tambah barisan bola di samping benteng
+Jarvis.buatBarisan("bola", 5, 2, 'z'); 
+
+Jarvis.kirim();
