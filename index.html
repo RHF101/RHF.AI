@@ -8,7 +8,6 @@
         :root { --main-cyan: #00ffcc; --bg-dark: #0a0a0a; --card-bg: #161616; --text-gray: #a0a0a0; }
         body { background: var(--bg-dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
         
-        /* Panel Proteksi */
         .glass-box { background: var(--card-bg); padding: 30px; border-radius: 20px; border: 1px solid #333; width: 90%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; }
         h2 { color: var(--main-cyan); letter-spacing: 2px; margin-bottom: 20px; text-transform: uppercase; }
         
@@ -18,13 +17,14 @@
         button { background: var(--main-cyan); color: black; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; width: 100%; }
         button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,255,204,0.4); }
 
-        /* Panel Kontrol (Hidden) */
         #main-ui { display: none; }
         .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
-        .tab-btn { background: #222; color: var(--text-gray); padding: 8px; font-size: 12px; border: 1px solid #333; }
+        .tab-btn { background: #222; color: var(--text-gray); padding: 8px; font-size: 12px; border: 1px solid #333; flex: 1; border-radius: 5px; cursor: pointer; }
         .tab-btn.active { background: var(--main-cyan); color: black; border-color: var(--main-cyan); }
         
-        #response-box { background: #000; border: 1px solid #333; padding: 15px; border-radius: 8px; margin-top: 20px; font-size: 13px; text-align: left; min-height: 50px; overflow-y: auto; max-height: 200px; color: #00ff88; white-space: pre-wrap; }
+        #response-box { background: #000; border: 1px solid #333; padding: 15px; border-radius: 8px; margin-top: 20px; font-size: 13px; text-align: left; min-height: 50px; overflow-y: auto; max-height: 200px; color: #00ff88; white-space: pre-wrap; font-family: 'Courier New', monospace; }
+        
+        .status-dot { height: 8px; width: 8px; background-color: #00ff88; border-radius: 50%; display: inline-block; margin-right: 5px; box-shadow: 0 0 5px #00ff88; }
     </style>
 </head>
 <body>
@@ -33,32 +33,32 @@
         <h2>RHF-AI ACCESS</h2>
         <p style="color: var(--text-gray); font-size: 14px;">Terminal Terproteksi</p>
         <input type="password" id="gate-key" placeholder="Enter Security Code...">
-        <button onclick="unlock()">INITIALIZE</button>
+        <button onclick="unlock()">INITIALIZE SYSTEM</button>
     </div>
 
     <div id="main-ui" class="glass-box">
-        <h2>RHF-COMMAND</h2>
+        <h2><span class="status-dot"></span>RHF-COMMAND</h2>
         <div class="tabs">
             <button id="btn-chat" class="tab-btn active" onclick="setMode('chat')">TANYA JAWAB</button>
             <button id="btn-rakit" class="tab-btn" onclick="setMode('rakit')">MODE RAKIT</button>
         </div>
         
-        <input type="text" id="prompt-input" placeholder="Ketik perintah di sini...">
+        <input type="text" id="prompt-input" placeholder="Tanya sesuatu...">
         <button id="send-btn" onclick="execute()">EXECUTE COMMAND</button>
 
-        <div id="response-box">Menunggu perintah...</div>
+        <div id="response-box">TERMINAL READY_</div>
     </div>
 
     <script>
         let currentMode = 'chat';
-        const SECRET_KEY = "RHF101_DEWA"; // Ganti sesukamu
+        const SECRET_KEY = "RHF101_DEWA";
 
         function unlock() {
             if (document.getElementById('gate-key').value === SECRET_KEY) {
                 document.getElementById('auth-panel').style.display = 'none';
                 document.getElementById('main-ui').style.display = 'block';
             } else {
-                alert("ACCESS DENIED!");
+                alert("ACCESS DENIED: WRONG KEY!");
             }
         }
 
@@ -66,31 +66,47 @@
             currentMode = mode;
             document.getElementById('btn-chat').className = (mode === 'chat' ? 'tab-btn active' : 'tab-btn');
             document.getElementById('btn-rakit').className = (mode === 'rakit' ? 'tab-btn active' : 'tab-btn');
-            document.getElementById('prompt-input').placeholder = (mode === 'chat' ? 'Tanya sesuatu...' : 'Rakit apa di Godot?');
+            document.getElementById('prompt-input').placeholder = (mode === 'chat' ? 'Tanya sesuatu...' : 'Ketik: piramida, bola, atau pilar...');
         }
 
         async function execute() {
-            const input = document.getElementById('prompt-input').value;
+            const inputVal = document.getElementById('prompt-input').value;
             const resBox = document.getElementById('response-box');
-            if(!input) return;
+            if(!inputVal) return;
 
-            resBox.innerText = "Processing...";
+            resBox.innerText = "> Loading data...\n> Establishing Firebase link...";
             
             try {
+                // SINKRONISASI: Variabel body harus sama dengan api/chat.js (prompt & mode)
                 const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
-                        pesan: input, 
+                        prompt: inputVal, // Pakai 'prompt' bukan 'pesan' agar sinkron dengan api
                         mode: currentMode 
                     })
                 });
+                
                 const data = await response.json();
-                resBox.innerText = data.reply;
+                
+                if (data.success) {
+                    resBox.innerText = `> SUCCESS\n> ${data.message}\n> Total Objects: ${data.total || 0}`;
+                } else {
+                    resBox.innerText = `> REPLY: ${data.reply || "Command Sent"}`;
+                }
+                
+                document.getElementById('prompt-input').value = ""; // Clear input
             } catch (err) {
-                resBox.innerText = "Error: " + err.message;
+                resBox.innerText = "> SYSTEM_ERROR: " + err.message;
             }
         }
+        
+        // Memungkinkan menekan Enter untuk kirim
+        document.getElementById("prompt-input").addEventListener("keyup", function(event) {
+            if (event.key === "Enter") {
+                execute();
+            }
+        });
     </script>
 </body>
 </html>
