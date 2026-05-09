@@ -1,258 +1,658 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RHF-AI | Chill Command</title>
-    <style>
-        :root { 
-            --main-cyan: #00ffcc; 
-            --soft-blue: #70a1ff;
-            --bg-dark: #0f1115; 
-            --card-bg: #1a1d23; 
-            --text-soft: #ced4da; 
-        }
-        
-        body { 
-            background: var(--bg-dark); 
-            color: white; 
-            font-family: 'Quicksand', 'Segoe UI', sans-serif; 
-            margin: 0; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            min-height: 100vh;
-            overflow: hidden;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GODOT AI FORGE</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:ital,wght@0,300;0,400;0,600;1,400&display=swap" rel="stylesheet" />
+  <style>
+    /* ── RESET & BASE ── */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
-        /* Latar Belakang Halus */
-        .ambient-bg {
-            position: fixed;
-            width: 300px;
-            height: 300px;
-            background: var(--main-cyan);
-            filter: blur(150px);
-            opacity: 0.1;
-            z-index: -1;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
+    :root {
+      --bg:        #05080d;
+      --surface:   #0b1018;
+      --surface2:  #101720;
+      --border:    #1a2535;
+      --border2:   #243040;
+      --gold:      #f0b429;
+      --gold-dim:  #a07820;
+      --blue:      #00d4ff;
+      --blue-dim:  #005a6e;
+      --green:     #00ff88;
+      --orange:    #ff6b2b;
+      --red:       #ff4757;
+      --purple:    #a855f7;
+      --text:      #c9d1d9;
+      --dim:       #4a5568;
+      --dim2:      #6e7681;
+    }
 
-        .glass-box { 
-            background: var(--card-bg); 
-            padding: 35px; 
-            border-radius: 30px; 
-            border: 1px solid rgba(255,255,255,0.05); 
-            width: 90%; 
-            max-width: 420px; 
-            box-shadow: 0 20px 50px rgba(0,0,0,0.3); 
-            text-align: center;
-            transition: 0.5s ease;
-        }
+    html { scroll-behavior: smooth; }
 
-        h2 { 
-            font-weight: 300;
-            color: var(--main-cyan); 
-            letter-spacing: 3px; 
-            margin-bottom: 25px; 
-            text-transform: uppercase; 
-        }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      min-height: 100vh;
+      overflow-x: hidden;
+      cursor: none;
+    }
 
-        input { 
-            background: rgba(255,255,255,0.05); 
-            border: 1px solid rgba(255,255,255,0.1); 
-            color: white; 
-            padding: 15px; 
-            border-radius: 15px; 
-            width: calc(100% - 32px); 
-            margin-bottom: 20px; 
-            outline: none; 
-            transition: 0.3s; 
-            text-align: center;
-        }
+    /* ── CUSTOM CURSOR ── */
+    #cursor {
+      position: fixed;
+      width: 12px; height: 12px;
+      background: var(--blue);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9999;
+      transition: transform 0.1s, background 0.2s;
+      mix-blend-mode: screen;
+      box-shadow: 0 0 12px var(--blue), 0 0 24px rgba(0,212,255,0.4);
+    }
+    #cursor-ring {
+      position: fixed;
+      width: 32px; height: 32px;
+      border: 1px solid rgba(0,212,255,0.4);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9998;
+      transition: transform 0.15s ease, width 0.2s, height 0.2s, border-color 0.2s;
+    }
 
-        input:focus { 
-            border-color: var(--main-cyan); 
-            background: rgba(255,255,255,0.08);
-        }
+    /* ── NOISE OVERLAY ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+      opacity: 0.025;
+      pointer-events: none;
+      z-index: 1;
+    }
 
-        button { 
-            background: linear-gradient(135deg, var(--main-cyan), var(--soft-blue)); 
-            color: #000; 
-            border: none; 
-            padding: 15px; 
-            border-radius: 15px; 
-            font-weight: bold; 
-            cursor: pointer; 
-            transition: 0.3s; 
-            width: 100%; 
-            box-shadow: 0 10px 20px rgba(0,255,204,0.2);
-        }
+    /* ── GRID BG ── */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,212,255,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,212,255,0.025) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none;
+      z-index: 0;
+    }
 
-        button:hover { 
-            transform: scale(1.02); 
-            box-shadow: 0 15px 25px rgba(0,255,204,0.3);
-        }
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 32px;
+      background: rgba(5,8,13,0.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+    }
 
-        #main-ui { display: none; }
-        
-        .tabs { 
-            display: flex; 
-            gap: 15px; 
-            margin-bottom: 25px; 
-            background: rgba(0,0,0,0.2);
-            padding: 5px;
-            border-radius: 18px;
-        }
+    .nav-logo {
+      font-family: 'Orbitron', monospace;
+      font-weight: 900;
+      font-size: 1rem;
+      letter-spacing: 3px;
+      background: linear-gradient(90deg, var(--gold), var(--blue));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
 
-        .tab-btn { 
-            background: transparent; 
-            color: var(--text-soft); 
-            padding: 12px; 
-            font-size: 12px; 
-            border: none; 
-            flex: 1; 
-            border-radius: 12px; 
-            cursor: pointer; 
-            transition: 0.3s;
-        }
+    .nav-links {
+      display: flex;
+      gap: 28px;
+      list-style: none;
+    }
+    .nav-links a {
+      font-size: 0.65rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--dim2);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--blue); }
 
-        .tab-btn.active { 
-            background: var(--card-bg); 
-            color: var(--main-cyan); 
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
+    .nav-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.6rem;
+      color: var(--green);
+      letter-spacing: 1.5px;
+    }
+    .status-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+      animation: blink 2s infinite;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.2; }
+    }
 
-        #response-box { 
-            background: rgba(0,0,0,0.3); 
-            border: 1px solid rgba(255,255,255,0.05); 
-            padding: 20px; 
-            border-radius: 20px; 
-            margin-top: 25px; 
-            font-size: 13px; 
-            text-align: left; 
-            min-height: 80px; 
-            max-height: 200px; 
-            overflow-y: auto; 
-            color: #a2a2a2; 
-            line-height: 1.6;
-            font-family: 'Segoe UI', sans-serif;
-        }
+    /* ── HERO ── */
+    .hero {
+      position: relative;
+      z-index: 2;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 120px 24px 60px;
+      overflow: hidden;
+    }
 
-        .loader {
-            display: none;
-            width: 20px;
-            height: 20px;
-            border: 2px solid #555;
-            border-top: 2px solid var(--main-cyan);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 10px auto;
-        }
+    /* Radial glow behind hero */
+    .hero-glow {
+      position: absolute;
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(0,212,255,0.06) 0%, transparent 70%);
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      animation: breathe 6s ease-in-out infinite;
+    }
+    .hero-glow2 {
+      position: absolute;
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(240,180,41,0.05) 0%, transparent 70%);
+      top: 40%; left: 30%;
+      pointer-events: none;
+      animation: breathe 8s ease-in-out infinite reverse;
+    }
+    @keyframes breathe {
+      0%, 100% { transform: translate(-50%,-50%) scale(1); opacity: 0.6; }
+      50%       { transform: translate(-50%,-50%) scale(1.15); opacity: 1; }
+    }
 
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    </style>
+    .hero-eyebrow {
+      font-size: 0.62rem;
+      letter-spacing: 5px;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 24px;
+      opacity: 0;
+      animation: fadeUp 0.8s ease 0.2s forwards;
+    }
+
+    .hero-title {
+      font-family: 'Orbitron', monospace;
+      font-weight: 900;
+      font-size: clamp(2.4rem, 8vw, 5.5rem);
+      line-height: 1.05;
+      letter-spacing: 4px;
+      margin-bottom: 12px;
+      opacity: 0;
+      animation: fadeUp 0.8s ease 0.4s forwards;
+    }
+    .hero-title .line1 {
+      background: linear-gradient(135deg, #ffffff 0%, var(--blue) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-title .line2 {
+      background: linear-gradient(135deg, var(--gold) 0%, var(--orange) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-subtitle {
+      max-width: 560px;
+      font-size: 0.78rem;
+      line-height: 1.9;
+      color: var(--dim2);
+      margin: 20px auto 40px;
+      opacity: 0;
+      animation: fadeUp 0.8s ease 0.6s forwards;
+    }
+
+    .hero-cta {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+      opacity: 0;
+      animation: fadeUp 0.8s ease 0.8s forwards;
+    }
+
+    .btn-primary {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      padding: 14px 32px;
+      background: linear-gradient(135deg, var(--blue), #0088aa);
+      color: #000;
+      border: none;
+      border-radius: 6px;
+      cursor: none;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 0 24px rgba(0,212,255,0.3);
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 40px rgba(0,212,255,0.5);
+    }
+
+    .btn-ghost {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.68rem;
+      letter-spacing: 1.5px;
+      padding: 14px 28px;
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border2);
+      border-radius: 6px;
+      cursor: none;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .btn-ghost:hover {
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+
+    /* ── FEATURES STRIP ── */
+    .features-strip {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      gap: 0;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    .feat {
+      flex: 1;
+      padding: 28px 24px;
+      border-right: 1px solid var(--border);
+      opacity: 0;
+      animation: fadeUp 0.6s ease both;
+      transition: background 0.3s;
+    }
+    .feat:last-child { border-right: none; }
+    .feat:hover { background: var(--surface); }
+    .feat:nth-child(1) { animation-delay: 1.0s; }
+    .feat:nth-child(2) { animation-delay: 1.1s; }
+    .feat:nth-child(3) { animation-delay: 1.2s; }
+    .feat:nth-child(4) { animation-delay: 1.3s; }
+
+    .feat-icon {
+      font-size: 1.4rem;
+      margin-bottom: 10px;
+    }
+    .feat-title {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: var(--blue);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+    }
+    .feat-desc {
+      font-size: 0.62rem;
+      color: var(--dim2);
+      line-height: 1.7;
+    }
+
+    /* ── MAIN APP SHELL ── */
+    #app {
+      position: relative;
+      z-index: 2;
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      grid-template-rows: auto 1fr;
+      min-height: 100vh;
+    }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      grid-row: 1 / 3;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 20px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-height: 100vh;
+      /* hidden by default, shown after entering app */
+      display: none;
+    }
+
+    .sidebar-section {
+      padding: 8px 16px 4px;
+      font-size: 0.55rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--dim);
+    }
+
+    .sidebar-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 20px;
+      font-size: 0.68rem;
+      color: var(--dim2);
+      cursor: none;
+      transition: background 0.2s, color 0.2s;
+      border-left: 2px solid transparent;
+    }
+    .sidebar-item:hover { background: var(--surface2); color: var(--text); }
+    .sidebar-item.active {
+      background: var(--surface2);
+      color: var(--blue);
+      border-left-color: var(--blue);
+    }
+
+    /* ── TERMINAL SECTION (below hero) ── */
+    .terminal-section {
+      position: relative;
+      z-index: 2;
+      padding: 60px 24px;
+      max-width: 800px;
+      margin: 0 auto;
+      opacity: 0;
+      animation: fadeUp 0.8s ease 1.4s forwards;
+    }
+
+    .terminal {
+      background: #0a0e14;
+      border: 1px solid var(--border2);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 0 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(0,212,255,0.05);
+    }
+
+    .terminal-bar {
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .terminal-dots { display: flex; gap: 6px; }
+    .tdot {
+      width: 10px; height: 10px; border-radius: 50%;
+    }
+    .tdot.r { background: #ff5f56; }
+    .tdot.y { background: #febc2e; }
+    .tdot.g { background: #27c840; }
+    .terminal-title {
+      font-size: 0.62rem;
+      color: var(--dim2);
+      letter-spacing: 2px;
+    }
+
+    .terminal-body {
+      padding: 24px;
+      font-size: 0.72rem;
+      line-height: 2;
+    }
+
+    .t-line { display: flex; gap: 10px; }
+    .t-prompt { color: var(--green); user-select: none; }
+    .t-cmd { color: var(--text); }
+    .t-out { color: var(--dim2); padding-left: 20px; }
+    .t-gold { color: var(--gold); }
+    .t-blue { color: var(--blue); }
+    .t-orange { color: var(--orange); }
+
+    .cursor-blink {
+      display: inline-block;
+      width: 8px; height: 14px;
+      background: var(--blue);
+      animation: cursorBlink 1s infinite;
+      vertical-align: middle;
+      margin-left: 2px;
+    }
+    @keyframes cursorBlink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0; }
+    }
+
+    /* ── TECH STACK BADGES ── */
+    .stack-section {
+      position: relative;
+      z-index: 2;
+      padding: 40px 24px 80px;
+      text-align: center;
+      opacity: 0;
+      animation: fadeUp 0.8s ease 1.6s forwards;
+    }
+    .stack-label {
+      font-size: 0.6rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--dim);
+      margin-bottom: 20px;
+    }
+    .stack-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+    .badge {
+      font-size: 0.62rem;
+      padding: 6px 14px;
+      border-radius: 4px;
+      border: 1px solid var(--border2);
+      color: var(--dim2);
+      letter-spacing: 1px;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .badge:hover { border-color: var(--blue); color: var(--blue); }
+    .badge.gold  { border-color: rgba(240,180,41,0.4); color: var(--gold); }
+    .badge.blue  { border-color: rgba(0,212,255,0.4); color: var(--blue); }
+    .badge.green { border-color: rgba(0,255,136,0.4); color: var(--green); }
+    .badge.orange{ border-color: rgba(255,107,43,0.4); color: var(--orange); }
+    .badge.purple{ border-color: rgba(168,85,247,0.4); color: var(--purple); }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+  </style>
 </head>
 <body>
 
-    <div class="ambient-bg"></div>
+  <!-- Custom cursor -->
+  <div id="cursor"></div>
+  <div id="cursor-ring"></div>
 
-    <div id="auth-panel" class="glass-box">
-        <h2>Welcome</h2>
-        <p style="color: var(--text-soft); font-size: 14px; margin-bottom: 20px;">Enter security code to start</p>
-        <input type="password" id="gate-key" placeholder="••••••">
-        <button onclick="unlock()">OPEN SESSION</button>
+  <!-- Nav -->
+  <nav>
+    <div class="nav-logo">⚡ GODOT AI FORGE</div>
+    <ul class="nav-links">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#stack">Stack</a></li>
+      <li><a href="app.html">Launch App</a></li>
+    </ul>
+    <div class="nav-status">
+      <div class="status-dot"></div>
+      SYSTEM ONLINE
     </div>
+  </nav>
 
-    <div id="main-ui" class="glass-box">
-        <h2>RHF-AI</h2>
-        <div class="tabs">
-            <button id="btn-chat" class="tab-btn active" onclick="setMode('chat')">Chatting</button>
-            <button id="btn-rakit" class="tab-btn" onclick="setMode('rakit')">Build 3D</button>
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-glow"></div>
+    <div class="hero-glow2"></div>
+
+    <div class="hero-eyebrow">⚡ Powered by Gemini · Tavily · Firebase · Canva</div>
+
+    <h1 class="hero-title">
+      <div class="line1">GODOT</div>
+      <div class="line2">AI FORGE</div>
+    </h1>
+
+    <p class="hero-subtitle">
+      AI game dev assistant yang terhubung langsung ke Godot Engine.<br>
+      Buat file, tulis script, generate asset — semua dari satu tempat.<br>
+      Memori super. Real-time. Teknik tumpuk.
+    </p>
+
+    <div class="hero-cta">
+      <a href="app.html" class="btn-primary">⚡ Launch App</a>
+      <a href="https://github.com" target="_blank" class="btn-ghost">📂 GitHub Repo</a>
+    </div>
+  </section>
+
+  <!-- Features strip -->
+  <div id="features" class="features-strip">
+    <div class="feat">
+      <div class="feat-icon">💬</div>
+      <div class="feat-title">AI Chat</div>
+      <div class="feat-desc">Gemini + Tavily web search. Punya memori super via Firebase. Bisa tanya apa aja soal Godot.</div>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">🎮</div>
+      <div class="feat-title">Godot Workspace</div>
+      <div class="feat-desc">Buat, edit, hapus file & script GDScript langsung. Plugin Godot sync otomatis.</div>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">🖼️</div>
+      <div class="feat-title">Image Studio</div>
+      <div class="feat-desc">Generate asset visual game dengan Canva API. Langsung export ke folder Godot.</div>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">🔁</div>
+      <div class="feat-title">Teknik Tumpuk</div>
+      <div class="feat-desc">Multi-step AI chaining. Plan → Execute → Verify → Refine. Bikin sistem kompleks otomatis.</div>
+    </div>
+  </div>
+
+  <!-- Terminal preview -->
+  <section class="terminal-section">
+    <div class="terminal">
+      <div class="terminal-bar">
+        <div class="terminal-dots">
+          <div class="tdot r"></div>
+          <div class="tdot y"></div>
+          <div class="tdot g"></div>
         </div>
-        
-        <input type="text" id="prompt-input" placeholder="Apa yang kamu pikirkan?">
-        <button id="send-btn" onclick="execute()">SEND COMMAND</button>
-        
-        <div class="loader" id="loader"></div>
-        <div id="response-box">Sistem siap menerima instruksi...</div>
+        <div class="terminal-title">godot-ai-forge — bash</div>
+      </div>
+      <div class="terminal-body">
+        <div class="t-line"><span class="t-prompt">forge@ai:~$</span><span class="t-cmd"> npm run dev</span></div>
+        <div class="t-out t-blue">  ▲ GODOT AI FORGE v1.0.0</div>
+        <div class="t-out">  ✓ Firebase connected</div>
+        <div class="t-out">  ✓ Gemini API ready</div>
+        <div class="t-out">  ✓ Tavily search ready</div>
+        <div class="t-out">  ✓ Canva API ready</div>
+        <div class="t-out t-green">  ✓ Godot plugin synced</div>
+        <div class="t-out t-gold">  → Local:   http://localhost:5173</div>
+        <div class="t-out t-gold">  → Network: https://godot-ai-forge.vercel.app</div>
+        <div class="t-line" style="margin-top:8px">
+          <span class="t-prompt">forge@ai:~$</span>
+          <span class="t-cmd"> </span>
+          <span class="cursor-blink"></span>
+        </div>
+      </div>
     </div>
+  </section>
 
-    <script>
-        let currentMode = 'chat';
-        const SECRET_KEY = "RHF101_DEWA";
+  <!-- Tech stack -->
+  <section id="stack" class="stack-section">
+    <div class="stack-label">// Tech Stack</div>
+    <div class="stack-badges">
+      <span class="badge blue">React + Vite</span>
+      <span class="badge gold">Gemini API</span>
+      <span class="badge blue">Tavily Search</span>
+      <span class="badge green">Firebase RTDB</span>
+      <span class="badge green">Firebase Storage</span>
+      <span class="badge purple">Canva API</span>
+      <span class="badge orange">GDScript Plugin</span>
+      <span class="badge">Vercel Deploy</span>
+      <span class="badge">GitHub Actions</span>
+    </div>
+  </section>
 
-        function unlock() {
-            const key = document.getElementById('gate-key').value;
-            if (key === SECRET_KEY) {
-                document.getElementById('auth-panel').style.opacity = '0';
-                setTimeout(() => {
-                    document.getElementById('auth-panel').style.display = 'none';
-                    document.getElementById('main-ui').style.display = 'block';
-                }, 300);
-            } else {
-                alert("Kode salah, Bro.");
-            }
-        }
+  <script>
+    // ── Custom cursor ──
+    const cursor     = document.getElementById('cursor');
+    const cursorRing = document.getElementById('cursor-ring');
+    let mx = 0, my = 0, rx = 0, ry = 0;
 
-        function setMode(mode) {
-            currentMode = mode;
-            document.getElementById('btn-chat').classList.toggle('active', mode === 'chat');
-            document.getElementById('btn-rakit').classList.toggle('active', mode === 'rakit');
-            document.getElementById('prompt-input').placeholder = (mode === 'chat' ? 'Tanya Gemini...' : 'Bikin apa di Godot?');
-        }
+    document.addEventListener('mousemove', e => {
+      mx = e.clientX; my = e.clientY;
+      cursor.style.left = (mx - 6) + 'px';
+      cursor.style.top  = (my - 6) + 'px';
+    });
 
-        async function execute() {
-            const inputVal = document.getElementById('prompt-input').value;
-            const resBox = document.getElementById('response-box');
-            const loader = document.getElementById('loader');
+    // Lag ring
+    (function animRing() {
+      rx += (mx - rx) * 0.12;
+      ry += (my - ry) * 0.12;
+      cursorRing.style.left = (rx - 16) + 'px';
+      cursorRing.style.top  = (ry - 16) + 'px';
+      requestAnimationFrame(animRing);
+    })();
 
-            if(!inputVal) return;
+    // Hover effects on interactive elements
+    document.querySelectorAll('a, button, .feat, .badge').forEach(el => {
+      el.addEventListener('mouseenter', () => {
+        cursor.style.transform = 'scale(2)';
+        cursor.style.background = 'var(--gold)';
+        cursorRing.style.width  = '48px';
+        cursorRing.style.height = '48px';
+        cursorRing.style.borderColor = 'rgba(240,180,41,0.5)';
+      });
+      el.addEventListener('mouseleave', () => {
+        cursor.style.transform = 'scale(1)';
+        cursor.style.background = 'var(--blue)';
+        cursorRing.style.width  = '32px';
+        cursorRing.style.height = '32px';
+        cursorRing.style.borderColor = 'rgba(0,212,255,0.4)';
+      });
+    });
 
-            // UI Feedback
-            resBox.innerText = "Sedang memproses...";
-            resBox.style.color = "#a2a2a2";
-            loader.style.display = "block";
-
-            try {
-                // Jalur API sesuai Tab
-                const apiUrl = currentMode === 'chat' ? '/api/chat' : '/api/generate';
-                
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prompt: inputVal })
-                });
-
-                // Cek apakah server kirim HTML Error atau JSON
-                const contentType = response.headers.get("content-type");
-                if (!contentType || !contentType.includes("application/json")) {
-                    const text = await response.text();
-                    throw new Error("Server Error: API Vercel kamu belum siap atau Crash.");
-                }
-
-                const data = await response.json();
-                loader.style.display = "none";
-
-                if (currentMode === 'rakit') {
-                    resBox.innerText = `✅ Berhasil dikirim ke Godot!\nObjek: ${data.total || 0}\n"${inputVal}"`;
-                } else {
-                    resBox.innerText = data.reply || "Gak ada respon dari AI.";
-                }
-
-                document.getElementById('prompt-input').value = "";
-            } catch (err) {
-                loader.style.display = "none";
-                resBox.style.color = "#ff7675";
-                resBox.innerText = "⚠️ Oops! " + err.message;
-                console.error(err);
-            }
-        }
-
-        document.getElementById("prompt-input").addEventListener("keyup", (e) => {
-            if (e.key === "Enter") execute();
-        });
-    </script>
+    // ── Typewriter terminal effect ──
+    const lines = document.querySelectorAll('.t-line .t-cmd, .t-out');
+    lines.forEach((el, i) => {
+      el.style.opacity = '0';
+      setTimeout(() => {
+        el.style.transition = 'opacity 0.3s';
+        el.style.opacity = '1';
+      }, 1600 + i * 180);
+    });
+  </script>
 </body>
 </html>
