@@ -66,7 +66,8 @@
             currentMode = mode;
             document.getElementById('btn-chat').className = (mode === 'chat' ? 'tab-btn active' : 'tab-btn');
             document.getElementById('btn-rakit').className = (mode === 'rakit' ? 'tab-btn active' : 'tab-btn');
-            document.getElementById('prompt-input').placeholder = (mode === 'chat' ? 'Tanya sesuatu...' : 'Ketik: piramida, bola, atau pilar...');
+            document.getElementById('prompt-input').placeholder = (mode === 'chat' ? 'Tanya sesuatu (Gemini)...' : 'Rakit di Godot (Arsitek)...');
+            document.getElementById('response-box').innerText = `MODE SWITCHED: ${mode.toUpperCase()}`;
         }
 
         async function execute() {
@@ -74,34 +75,37 @@
             const resBox = document.getElementById('response-box');
             if(!inputVal) return;
 
-            resBox.innerText = "> Loading data...\n> Establishing Firebase link...";
+            resBox.innerText = `> Initializing /api/${currentMode === 'chat' ? 'chat' : 'generate'}...`;
             
             try {
-                // SINKRONISASI: Variabel body harus sama dengan api/chat.js (prompt & mode)
-                const response = await fetch('/api/chat', {
+                // LOGIKA CERDAS: Pilih file API berdasarkan mode
+                const apiUrl = currentMode === 'chat' ? '/api/chat' : '/api/generate';
+                
+                const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
-                        prompt: inputVal, // Pakai 'prompt' bukan 'pesan' agar sinkron dengan api
+                        prompt: inputVal,
                         mode: currentMode 
                     })
                 });
                 
                 const data = await response.json();
                 
-                if (data.success) {
-                    resBox.innerText = `> SUCCESS\n> ${data.message}\n> Total Objects: ${data.total || 0}`;
+                if (currentMode === 'rakit') {
+                    // Tampilan khusus hasil rakitan di Godot
+                    resBox.innerText = `> GODOT_BUILDER_SUCCESS\n> ${data.message}\n> Total Objects: ${data.total || 0}`;
                 } else {
-                    resBox.innerText = `> REPLY: ${data.reply || "Command Sent"}`;
+                    // Tampilan balasan chat Gemini
+                    resBox.innerText = `> RHF_AI_REPLY:\n${data.reply || "Done."}`;
                 }
                 
-                document.getElementById('prompt-input').value = ""; // Clear input
+                document.getElementById('prompt-input').value = ""; 
             } catch (err) {
-                resBox.innerText = "> SYSTEM_ERROR: " + err.message;
+                resBox.innerText = "> FATAL_ERROR: " + err.message;
             }
         }
         
-        // Memungkinkan menekan Enter untuk kirim
         document.getElementById("prompt-input").addEventListener("keyup", function(event) {
             if (event.key === "Enter") {
                 execute();
