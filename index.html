@@ -3,50 +3,180 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RHF-AI | Master Command Center</title>
+    <title>RHF-AI | Chill Command</title>
     <style>
-        :root { --main-cyan: #00ffcc; --bg-dark: #0a0a0a; --card-bg: #161616; --text-gray: #a0a0a0; }
-        body { background: var(--bg-dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        :root { 
+            --main-cyan: #00ffcc; 
+            --soft-blue: #70a1ff;
+            --bg-dark: #0f1115; 
+            --card-bg: #1a1d23; 
+            --text-soft: #ced4da; 
+        }
         
-        .glass-box { background: var(--card-bg); padding: 30px; border-radius: 20px; border: 1px solid #333; width: 90%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; }
-        h2 { color: var(--main-cyan); letter-spacing: 2px; margin-bottom: 20px; text-transform: uppercase; font-size: 1.2rem; }
-        
-        input { background: #222; border: 1px solid #444; color: white; padding: 12px; border-radius: 8px; width: calc(100% - 26px); margin-bottom: 15px; outline: none; transition: 0.3s; }
-        input:focus { border-color: var(--main-cyan); box-shadow: 0 0 10px rgba(0,255,204,0.2); }
-        
-        button { background: var(--main-cyan); color: black; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; width: 100%; text-transform: uppercase; }
-        button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,255,204,0.4); }
+        body { 
+            background: var(--bg-dark); 
+            color: white; 
+            font-family: 'Quicksand', 'Segoe UI', sans-serif; 
+            margin: 0; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Latar Belakang Halus */
+        .ambient-bg {
+            position: fixed;
+            width: 300px;
+            height: 300px;
+            background: var(--main-cyan);
+            filter: blur(150px);
+            opacity: 0.1;
+            z-index: -1;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .glass-box { 
+            background: var(--card-bg); 
+            padding: 35px; 
+            border-radius: 30px; 
+            border: 1px solid rgba(255,255,255,0.05); 
+            width: 90%; 
+            max-width: 420px; 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3); 
+            text-align: center;
+            transition: 0.5s ease;
+        }
+
+        h2 { 
+            font-weight: 300;
+            color: var(--main-cyan); 
+            letter-spacing: 3px; 
+            margin-bottom: 25px; 
+            text-transform: uppercase; 
+        }
+
+        input { 
+            background: rgba(255,255,255,0.05); 
+            border: 1px solid rgba(255,255,255,0.1); 
+            color: white; 
+            padding: 15px; 
+            border-radius: 15px; 
+            width: calc(100% - 32px); 
+            margin-bottom: 20px; 
+            outline: none; 
+            transition: 0.3s; 
+            text-align: center;
+        }
+
+        input:focus { 
+            border-color: var(--main-cyan); 
+            background: rgba(255,255,255,0.08);
+        }
+
+        button { 
+            background: linear-gradient(135deg, var(--main-cyan), var(--soft-blue)); 
+            color: #000; 
+            border: none; 
+            padding: 15px; 
+            border-radius: 15px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            transition: 0.3s; 
+            width: 100%; 
+            box-shadow: 0 10px 20px rgba(0,255,204,0.2);
+        }
+
+        button:hover { 
+            transform: scale(1.02); 
+            box-shadow: 0 15px 25px rgba(0,255,204,0.3);
+        }
 
         #main-ui { display: none; }
-        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
-        .tab-btn { background: #222; color: var(--text-gray); padding: 10px; font-size: 11px; border: 1px solid #333; flex: 1; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        .tab-btn.active { background: var(--main-cyan); color: black; border-color: var(--main-cyan); }
         
-        #response-box { background: #000; border: 1px solid #333; padding: 15px; border-radius: 8px; margin-top: 20px; font-size: 13px; text-align: left; min-height: 60px; overflow-y: auto; max-height: 250px; color: #00ff88; white-space: pre-wrap; font-family: 'Courier New', monospace; line-height: 1.4; }
-        
-        .status-dot { height: 8px; width: 8px; background-color: #00ff88; border-radius: 50%; display: inline-block; margin-right: 5px; box-shadow: 0 0 5px #00ff88; }
+        .tabs { 
+            display: flex; 
+            gap: 15px; 
+            margin-bottom: 25px; 
+            background: rgba(0,0,0,0.2);
+            padding: 5px;
+            border-radius: 18px;
+        }
+
+        .tab-btn { 
+            background: transparent; 
+            color: var(--text-soft); 
+            padding: 12px; 
+            font-size: 12px; 
+            border: none; 
+            flex: 1; 
+            border-radius: 12px; 
+            cursor: pointer; 
+            transition: 0.3s;
+        }
+
+        .tab-btn.active { 
+            background: var(--card-bg); 
+            color: var(--main-cyan); 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        #response-box { 
+            background: rgba(0,0,0,0.3); 
+            border: 1px solid rgba(255,255,255,0.05); 
+            padding: 20px; 
+            border-radius: 20px; 
+            margin-top: 25px; 
+            font-size: 13px; 
+            text-align: left; 
+            min-height: 80px; 
+            max-height: 200px; 
+            overflow-y: auto; 
+            color: #a2a2a2; 
+            line-height: 1.6;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .loader {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #555;
+            border-top: 2px solid var(--main-cyan);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 10px auto;
+        }
+
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
+    <div class="ambient-bg"></div>
+
     <div id="auth-panel" class="glass-box">
-        <h2>RHF-AI ACCESS</h2>
-        <p style="color: var(--text-gray); font-size: 14px;">Terminal Terproteksi</p>
-        <input type="password" id="gate-key" placeholder="Enter Security Code...">
-        <button onclick="unlock()">INITIALIZE SYSTEM</button>
+        <h2>Welcome</h2>
+        <p style="color: var(--text-soft); font-size: 14px; margin-bottom: 20px;">Enter security code to start</p>
+        <input type="password" id="gate-key" placeholder="••••••">
+        <button onclick="unlock()">OPEN SESSION</button>
     </div>
 
     <div id="main-ui" class="glass-box">
-        <h2><span class="status-dot"></span>RHF-COMMAND</h2>
+        <h2>RHF-AI</h2>
         <div class="tabs">
-            <button id="btn-chat" class="tab-btn active" onclick="setMode('chat')">BRAIN CHAT</button>
-            <button id="btn-rakit" class="tab-btn" onclick="setMode('rakit')">MODE RAKIT</button>
+            <button id="btn-chat" class="tab-btn active" onclick="setMode('chat')">Chatting</button>
+            <button id="btn-rakit" class="tab-btn" onclick="setMode('rakit')">Build 3D</button>
         </div>
         
-        <input type="text" id="prompt-input" placeholder="Tanya sesuatu...">
-        <button id="send-btn" onclick="execute()">EXECUTE COMMAND</button>
-
-        <div id="response-box">TERMINAL READY_</div>
+        <input type="text" id="prompt-input" placeholder="Apa yang kamu pikirkan?">
+        <button id="send-btn" onclick="execute()">SEND COMMAND</button>
+        
+        <div class="loader" id="loader"></div>
+        <div id="response-box">Sistem siap menerima instruksi...</div>
     </div>
 
     <script>
@@ -54,64 +184,74 @@
         const SECRET_KEY = "RHF101_DEWA";
 
         function unlock() {
-            if (document.getElementById('gate-key').value === SECRET_KEY) {
-                document.getElementById('auth-panel').style.display = 'none';
-                document.getElementById('main-ui').style.display = 'block';
+            const key = document.getElementById('gate-key').value;
+            if (key === SECRET_KEY) {
+                document.getElementById('auth-panel').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('auth-panel').style.display = 'none';
+                    document.getElementById('main-ui').style.display = 'block';
+                }, 300);
             } else {
-                alert("ACCESS DENIED!");
+                alert("Kode salah, Bro.");
             }
         }
 
         function setMode(mode) {
             currentMode = mode;
-            document.getElementById('btn-chat').className = (mode === 'chat' ? 'tab-btn active' : 'tab-btn');
-            document.getElementById('btn-rakit').className = (mode === 'rakit' ? 'tab-btn active' : 'tab-btn');
-            
-            // Update placeholder agar user tau mode mana yang aktif
-            document.getElementById('prompt-input').placeholder = 
-                (mode === 'chat' ? 'Tanya sesuatu (Gemini)...' : 'Rakit apa di Godot? (Arsitek)');
-            
-            document.getElementById('response-box').innerText = `SYSTEM_MODE: ${mode.toUpperCase()}_READY`;
+            document.getElementById('btn-chat').classList.toggle('active', mode === 'chat');
+            document.getElementById('btn-rakit').classList.toggle('active', mode === 'rakit');
+            document.getElementById('prompt-input').placeholder = (mode === 'chat' ? 'Tanya Gemini...' : 'Bikin apa di Godot?');
         }
 
         async function execute() {
             const inputVal = document.getElementById('prompt-input').value;
             const resBox = document.getElementById('response-box');
+            const loader = document.getElementById('loader');
+
             if(!inputVal) return;
 
-            resBox.innerText = `> Connecting to /api/${currentMode}...\n> Waiting for AI response...`;
-            
+            // UI Feedback
+            resBox.innerText = "Sedang memproses...";
+            resBox.style.color = "#a2a2a2";
+            loader.style.display = "block";
+
             try {
-                // LOGIKA INI YANG PENTING: Pilih URL berdasarkan tombol yang lo tekan
-                const targetUrl = currentMode === 'chat' ? '/api/chat' : '/api/generate';
+                // Jalur API sesuai Tab
+                const apiUrl = currentMode === 'chat' ? '/api/chat' : '/api/generate';
                 
-                const response = await fetch(targetUrl, {
+                const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ prompt: inputVal })
                 });
-                
-                const data = await response.json();
-                
-                if (currentMode === 'rakit') {
-                    // Jika sukses rakit ke Godot
-                    resBox.innerText = `> BUILDER_STATUS: SUCCESS\n> ${data.message}\n> Nodes: ${data.total || 0}`;
-                } else {
-                    // Jika mode chat biasa
-                    resBox.innerText = `> RHF-AI_REPLY:\n${data.reply || "Done."}`;
+
+                // Cek apakah server kirim HTML Error atau JSON
+                const contentType = response.headers.get("content-type");
+                if (!contentType || !contentType.includes("application/json")) {
+                    const text = await response.text();
+                    throw new Error("Server Error: API Vercel kamu belum siap atau Crash.");
                 }
-                
-                document.getElementById('prompt-input').value = ""; // Bersihkan input
+
+                const data = await response.json();
+                loader.style.display = "none";
+
+                if (currentMode === 'rakit') {
+                    resBox.innerText = `✅ Berhasil dikirim ke Godot!\nObjek: ${data.total || 0}\n"${inputVal}"`;
+                } else {
+                    resBox.innerText = data.reply || "Gak ada respon dari AI.";
+                }
+
+                document.getElementById('prompt-input').value = "";
             } catch (err) {
-                resBox.innerText = "> SYSTEM_ERROR: " + err.message;
+                loader.style.display = "none";
+                resBox.style.color = "#ff7675";
+                resBox.innerText = "⚠️ Oops! " + err.message;
+                console.error(err);
             }
         }
-        
-        // Memungkinkan tekan Enter untuk eksekusi
-        document.getElementById("prompt-input").addEventListener("keyup", function(event) {
-            if (event.key === "Enter") {
-                execute();
-            }
+
+        document.getElementById("prompt-input").addEventListener("keyup", (e) => {
+            if (e.key === "Enter") execute();
         });
     </script>
 </body>
