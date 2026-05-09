@@ -3,26 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RHF-AI | Command Center</title>
+    <title>RHF-AI | Master Command Center</title>
     <style>
         :root { --main-cyan: #00ffcc; --bg-dark: #0a0a0a; --card-bg: #161616; --text-gray: #a0a0a0; }
         body { background: var(--bg-dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
         
         .glass-box { background: var(--card-bg); padding: 30px; border-radius: 20px; border: 1px solid #333; width: 90%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; }
-        h2 { color: var(--main-cyan); letter-spacing: 2px; margin-bottom: 20px; text-transform: uppercase; }
+        h2 { color: var(--main-cyan); letter-spacing: 2px; margin-bottom: 20px; text-transform: uppercase; font-size: 1.2rem; }
         
         input { background: #222; border: 1px solid #444; color: white; padding: 12px; border-radius: 8px; width: calc(100% - 26px); margin-bottom: 15px; outline: none; transition: 0.3s; }
         input:focus { border-color: var(--main-cyan); box-shadow: 0 0 10px rgba(0,255,204,0.2); }
         
-        button { background: var(--main-cyan); color: black; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; width: 100%; }
+        button { background: var(--main-cyan); color: black; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; width: 100%; text-transform: uppercase; }
         button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,255,204,0.4); }
 
         #main-ui { display: none; }
         .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
-        .tab-btn { background: #222; color: var(--text-gray); padding: 8px; font-size: 12px; border: 1px solid #333; flex: 1; border-radius: 5px; cursor: pointer; }
+        .tab-btn { background: #222; color: var(--text-gray); padding: 10px; font-size: 11px; border: 1px solid #333; flex: 1; border-radius: 6px; cursor: pointer; font-weight: bold; }
         .tab-btn.active { background: var(--main-cyan); color: black; border-color: var(--main-cyan); }
         
-        #response-box { background: #000; border: 1px solid #333; padding: 15px; border-radius: 8px; margin-top: 20px; font-size: 13px; text-align: left; min-height: 50px; overflow-y: auto; max-height: 200px; color: #00ff88; white-space: pre-wrap; font-family: 'Courier New', monospace; }
+        #response-box { background: #000; border: 1px solid #333; padding: 15px; border-radius: 8px; margin-top: 20px; font-size: 13px; text-align: left; min-height: 60px; overflow-y: auto; max-height: 250px; color: #00ff88; white-space: pre-wrap; font-family: 'Courier New', monospace; line-height: 1.4; }
         
         .status-dot { height: 8px; width: 8px; background-color: #00ff88; border-radius: 50%; display: inline-block; margin-right: 5px; box-shadow: 0 0 5px #00ff88; }
     </style>
@@ -39,7 +39,7 @@
     <div id="main-ui" class="glass-box">
         <h2><span class="status-dot"></span>RHF-COMMAND</h2>
         <div class="tabs">
-            <button id="btn-chat" class="tab-btn active" onclick="setMode('chat')">TANYA JAWAB</button>
+            <button id="btn-chat" class="tab-btn active" onclick="setMode('chat')">BRAIN CHAT</button>
             <button id="btn-rakit" class="tab-btn" onclick="setMode('rakit')">MODE RAKIT</button>
         </div>
         
@@ -58,7 +58,7 @@
                 document.getElementById('auth-panel').style.display = 'none';
                 document.getElementById('main-ui').style.display = 'block';
             } else {
-                alert("ACCESS DENIED: WRONG KEY!");
+                alert("ACCESS DENIED!");
             }
         }
 
@@ -66,8 +66,12 @@
             currentMode = mode;
             document.getElementById('btn-chat').className = (mode === 'chat' ? 'tab-btn active' : 'tab-btn');
             document.getElementById('btn-rakit').className = (mode === 'rakit' ? 'tab-btn active' : 'tab-btn');
-            document.getElementById('prompt-input').placeholder = (mode === 'chat' ? 'Tanya sesuatu (Gemini)...' : 'Rakit di Godot (Arsitek)...');
-            document.getElementById('response-box').innerText = `MODE SWITCHED: ${mode.toUpperCase()}`;
+            
+            // Update placeholder agar user tau mode mana yang aktif
+            document.getElementById('prompt-input').placeholder = 
+                (mode === 'chat' ? 'Tanya sesuatu (Gemini)...' : 'Rakit apa di Godot? (Arsitek)');
+            
+            document.getElementById('response-box').innerText = `SYSTEM_MODE: ${mode.toUpperCase()}_READY`;
         }
 
         async function execute() {
@@ -75,37 +79,35 @@
             const resBox = document.getElementById('response-box');
             if(!inputVal) return;
 
-            resBox.innerText = `> Initializing /api/${currentMode === 'chat' ? 'chat' : 'generate'}...`;
+            resBox.innerText = `> Connecting to /api/${currentMode}...\n> Waiting for AI response...`;
             
             try {
-                // LOGIKA CERDAS: Pilih file API berdasarkan mode
-                const apiUrl = currentMode === 'chat' ? '/api/chat' : '/api/generate';
+                // LOGIKA INI YANG PENTING: Pilih URL berdasarkan tombol yang lo tekan
+                const targetUrl = currentMode === 'chat' ? '/api/chat' : '/api/generate';
                 
-                const response = await fetch(apiUrl, {
+                const response = await fetch(targetUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        prompt: inputVal,
-                        mode: currentMode 
-                    })
+                    body: JSON.stringify({ prompt: inputVal })
                 });
                 
                 const data = await response.json();
                 
                 if (currentMode === 'rakit') {
-                    // Tampilan khusus hasil rakitan di Godot
-                    resBox.innerText = `> GODOT_BUILDER_SUCCESS\n> ${data.message}\n> Total Objects: ${data.total || 0}`;
+                    // Jika sukses rakit ke Godot
+                    resBox.innerText = `> BUILDER_STATUS: SUCCESS\n> ${data.message}\n> Nodes: ${data.total || 0}`;
                 } else {
-                    // Tampilan balasan chat Gemini
-                    resBox.innerText = `> RHF_AI_REPLY:\n${data.reply || "Done."}`;
+                    // Jika mode chat biasa
+                    resBox.innerText = `> RHF-AI_REPLY:\n${data.reply || "Done."}`;
                 }
                 
-                document.getElementById('prompt-input').value = ""; 
+                document.getElementById('prompt-input').value = ""; // Bersihkan input
             } catch (err) {
-                resBox.innerText = "> FATAL_ERROR: " + err.message;
+                resBox.innerText = "> SYSTEM_ERROR: " + err.message;
             }
         }
         
+        // Memungkinkan tekan Enter untuk eksekusi
         document.getElementById("prompt-input").addEventListener("keyup", function(event) {
             if (event.key === "Enter") {
                 execute();
