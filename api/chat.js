@@ -1,61 +1,81 @@
 const axios = require('axios');
-const FIREBASE_URL = "https://rhf-confrims-default-rtdb.firebaseio.com/perintah_ai.json";
+
+// GANTI DENGAN URL FIREBASE KAMU
+const BASE_URL = "https://rhf-confrims-default-rtdb.firebaseio.com/perintah_ai";
+
+/**
+ * Fungsi untuk memastikan URL selalu diakhiri .json
+ * Ini untuk mencegah error "Unexpected token T" (HTML Error)
+ */
+const getValidUrl = () => BASE_URL.endsWith(".json") ? BASE_URL : `${BASE_URL}.json`;
 
 class AIMasterBuilder {
     constructor() {
         this.nodes = [];
     }
 
-    // Fungsi untuk meriset area kerja
-    reset() { this.nodes = []; }
+    // Membersihkan antrian perintah
+    clear() {
+        this.nodes = [];
+        return this;
+    }
 
-    // Fungsi Cerdas: Membuat Barisan (Array)
-    buatBarisan(tipe, jumlah, jarak, sumbu = 'x') {
+    /**
+     * Fungsi untuk menambah objek secara cerdas
+     * @param {string} tipe - 'kotak', 'bola', 'lantai', 'tabung'
+     * @param {Array} pos - [x, y, z]
+     * @param {Array} scale - [x, y, z]
+     */
+    tambahObjek(tipe, pos = [0, 0, 0], scale = [1, 1, 1]) {
+        this.nodes.push({
+            file: tipe.toLowerCase(), // Kirim nama murni tanpa .obj
+            name: `${tipe}_${this.nodes.length}`,
+            pos: pos,
+            rot: [0, 0, 0],
+            scale: scale
+        });
+        return this;
+    }
+
+    // Fungsi otomatis membuat struktur kompleks
+    buatPilar(jumlah, jarak = 4) {
         for (let i = 0; i < jumlah; i++) {
-            let pos = [0, 1, 0];
-            if (sumbu === 'x') pos[0] = i * jarak;
-            if (sumbu === 'z') pos[2] = i * -jarak;
-            
-            this.nodes.push({
-                file: tipe,
-                pos: pos,
-                scale: [1, 1, 1]
-            });
+            this.tambahObjek("tabung", [i * jarak, 2, -5], [1, 4, 1]);
         }
+        return this;
     }
 
-    // Fungsi Cerdas: Membuat Ruangan/Rumah
-    buatStruktur(nama) {
-        if (nama === "benteng") {
-            // Lantai
-            this.nodes.push({ file: "lantai", pos: [0, 0, 0], scale: [2, 1, 2] });
-            // 4 Pilar di sudut
-            const sudut = [[-4, 2, -4], [4, 2, -4], [-4, 2, 4], [4, 2, 4]];
-            sudut.forEach(s => {
-                this.nodes.push({ file: "tabung", pos: s, scale: [1, 4, 1] });
-            });
-            // Atap flat
-            this.nodes.push({ file: "kotak", pos: [0, 4.5, 0], scale: [5, 0.2, 5] });
-        }
-    }
-
+    // Mengirim data ke Firebase
     async kirim() {
+        const payload = { nodes: this.nodes };
+        
         try {
-            await axios.put(FIREBASE_URL, { nodes: this.nodes });
-            console.log("✅ Master Arsitek: Struktur Berhasil Dikirim!");
-        } catch (e) {
-            console.error("❌ Koneksi Gagal:", e.message);
+            console.log("📤 Mengirim instruksi ke Firebase...");
+            const res = await axios.put(getValidUrl(), payload);
+            
+            if (res.status === 200) {
+                console.log("✅ BERHASIL: Instruksi diterima Firebase.");
+                console.log("📊 Total Objek:", this.nodes.length);
+            }
+        } catch (error) {
+            console.error("❌ GAGAL:");
+            if (error.response) {
+                // Server merespon tapi error (misal 404 atau 401)
+                console.error(`Status: ${error.response.status}`);
+                console.error("Pesan: Pastikan Rules Firebase sudah 'true'");
+            } else {
+                console.error("Cek koneksi internet atau URL Firebase kamu.");
+            }
         }
     }
 }
 
-// --- CARA PERINTAH SI MASTER ---
-const Jarvis = new AIMasterBuilder();
+// --- CARA PENGGUNAAN ---
+const Arsitek = new AIMasterBuilder();
 
-// Contoh 1: Bikin Benteng Otomatis
-Jarvis.buatStruktur("benteng");
-
-// Contoh 2: Tambah barisan bola di samping benteng
-Jarvis.buatBarisan("bola", 5, 2, 'z'); 
-
-Jarvis.kirim();
+// Contoh: Membuat Lantai, 3 Pilar, dan 1 Kotak di atasnya
+Arsitek.clear()
+    .tambahObjek("lantai", [0, 0, 0], [1, 1, 1]) // Dasar
+    .buatPilar(3, 5)                             // 3 Tiang biru
+    .tambahObjek("kotak", [5, 5, -5], [2, 2, 2])  // Kotak merah melayang
+    .kirim();
